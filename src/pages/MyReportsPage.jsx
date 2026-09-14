@@ -1,0 +1,284 @@
+import React, { useState } from 'react';
+import { useRaven } from '../context/RavenContext';
+import TrustBadge from '../components/common/TrustBadge';
+import { 
+  FileText, 
+  Building2, 
+  AlertCircle, 
+  MapPin, 
+  Calendar,
+  ArrowRight,
+  ShieldCheck,
+  Lock
+} from 'lucide-react';
+
+export default function MyReportsPage() {
+  const { profile, schemeReports, civicReports, schemes, navigateTo } = useRaven();
+
+  const [activeTab, setActiveTab] = useState('schemes'); // 'schemes', 'civic'
+
+  // Filter reports submitted by the active account
+  const userSchemeReports = schemeReports.filter(r => 
+    r.userId === profile.id || r.userId === 'demo-citizen-01' || r.citizenName === profile.name
+  );
+  
+  const userCivicReports = civicReports.filter(r => 
+    r.userId === profile.id || r.userId === 'demo-citizen-01' || r.reportedBy === profile.name
+  );
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      {/* Private Profile Header Box */}
+      <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-full bg-slate-900 text-white font-bold text-lg flex items-center justify-center border-2 border-teal-500 shrink-0">
+            {profile.avatar || 'DC'}
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold text-slate-900">{profile.name}</h1>
+              <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-teal-50 text-teal-800 border border-teal-200">
+                {profile.role}
+              </span>
+            </div>
+            <div className="text-xs text-slate-500 mt-0.5 flex flex-wrap items-center gap-2">
+              <span className="flex items-center gap-1">
+                <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                {profile.district} District
+              </span>
+              <span>•</span>
+              <span className="inline-flex items-center gap-1 text-teal-700 font-medium">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                Anonymous to the public
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 text-center text-xs">
+          <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200 min-w-[110px]">
+            <div className="text-slate-400 text-[10px] uppercase font-semibold">Scheme Reports</div>
+            <div className="text-base font-bold text-teal-800 mt-0.5">{userSchemeReports.length}</div>
+          </div>
+          <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200 min-w-[110px]">
+            <div className="text-slate-400 text-[10px] uppercase font-semibold">Civic Reports</div>
+            <div className="text-base font-bold text-blue-800 mt-0.5">{userCivicReports.length}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Privacy Guarantee Callout */}
+      <div className="bg-slate-100/80 border border-slate-200 rounded-lg p-4 text-xs flex items-center justify-between gap-3 text-slate-700">
+        <div className="flex items-center gap-2">
+          <Lock className="w-4 h-4 text-teal-700 shrink-0" />
+          <div>
+            <strong className="text-slate-900">Private Submissions View:</strong> Only you can see your personal submissions here. In all public logs, scheme cards, and civic issue clusters, your identity is strictly displayed as <strong>Anonymous Citizen</strong>.
+          </div>
+        </div>
+        <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-white text-slate-600 border shrink-0">
+          Zero Public Identifiers
+        </span>
+      </div>
+
+      {/* Module Separation Tabs */}
+      <div className="border-b border-slate-200 flex items-center gap-6 text-xs font-semibold">
+        <button
+          onClick={() => setActiveTab('schemes')}
+          className={`pb-3 border-b-2 transition flex items-center gap-1.5 ${
+            activeTab === 'schemes'
+              ? 'border-teal-600 text-teal-900 font-bold'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <Building2 className="w-4 h-4 text-teal-600" />
+          <span>My Scheme Reports ({userSchemeReports.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('civic')}
+          className={`pb-3 border-b-2 transition flex items-center gap-1.5 ${
+            activeTab === 'civic'
+              ? 'border-blue-600 text-blue-900 font-bold'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <AlertCircle className="w-4 h-4 text-blue-600" />
+          <span>My Everyday Civic Reports ({userCivicReports.length})</span>
+        </button>
+      </div>
+
+      {/* Tab 1: Module A Scheme Reports */}
+      {activeTab === 'schemes' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+              Your Contributions to Government Scheme Reality Tracking
+            </h2>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-teal-700 font-medium">
+                Public display: Anonymous Citizen
+              </span>
+              <TrustBadge type="CITIZEN" size="xs" />
+            </div>
+          </div>
+
+          {userSchemeReports.length === 0 ? (
+            <div className="bg-white border border-slate-200 rounded-lg p-10 text-center text-xs text-slate-500 space-y-3">
+              <p>You haven't submitted any scheme citizen experience reports yet.</p>
+              <button
+                onClick={() => navigateTo('schemes')}
+                className="px-4 py-2 bg-teal-800 text-white rounded text-xs font-semibold"
+              >
+                Browse Schemes to Report Experience
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {userSchemeReports.map((report) => {
+                const scheme = schemes.find(s => s.id === report.schemeId);
+                return (
+                  <div key={report.id} className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm space-y-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-100">
+                      <div>
+                        <span className="text-xs font-bold text-slate-900">
+                          {scheme ? scheme.shortName : report.schemeId}
+                        </span>
+                        <span className="text-slate-400 text-xs ml-2">ID: {report.id}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] px-2 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-200 font-medium">
+                          {report.category}
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-mono">
+                          Lang: {report.language}
+                        </span>
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-slate-800 font-sans leading-relaxed">
+                      "{report.reportText}"
+                    </p>
+
+                    {/* Attachments preview */}
+                    {report.attachments && report.attachments.length > 0 && (
+                      <div className="text-[11px] text-slate-600 bg-slate-50 p-2 rounded border border-slate-100 flex items-center gap-2">
+                        <FileText className="w-3.5 h-3.5 text-teal-700" />
+                        <span>Attached evidence: {report.attachments.map(a => a.name).join(', ')}</span>
+                      </div>
+                    )}
+
+                    <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between text-[11px] text-slate-500">
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                          Reported: {report.dateReported}
+                        </span>
+                        {report.delayDays && (
+                          <span className="text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 font-medium">
+                            Delay: {report.delayDays} days
+                          </span>
+                        )}
+                        <span className="text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200 font-medium">
+                          Public: Anonymous Citizen
+                        </span>
+                      </div>
+
+                      {scheme && (
+                        <button
+                          onClick={() => navigateTo('scheme-detail', scheme.id)}
+                          className="text-teal-800 hover:text-teal-950 font-semibold inline-flex items-center gap-1"
+                        >
+                          <span>View Scheme Reality Gap</span>
+                          <ArrowRight className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Tab 2: Module B Civic Reports */}
+      {activeTab === 'civic' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+              Your Everyday Civic Issue Reports & Clustered Cases
+            </h2>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-teal-700 font-medium">
+                Public display: Anonymous Citizen
+              </span>
+              <TrustBadge type="CITIZEN" size="xs" />
+            </div>
+          </div>
+
+          {userCivicReports.length === 0 ? (
+            <div className="bg-white border border-slate-200 rounded-lg p-10 text-center text-xs text-slate-500 space-y-3">
+              <p>You haven't submitted any civic issue reports yet.</p>
+              <button
+                onClick={() => navigateTo('civic-issues')}
+                className="px-4 py-2 bg-blue-800 text-white rounded text-xs font-semibold"
+              >
+                Report an Everyday Civic Issue
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {userCivicReports.map((report) => (
+                <div key={report.id} className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm space-y-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-100">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs font-bold px-2 py-0.5 bg-slate-900 text-white rounded">
+                        {report.clusterId}
+                      </span>
+                      <span className="text-xs font-medium text-slate-700">
+                        {report.location}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] px-2 py-0.5 rounded bg-slate-100 text-slate-700 border font-medium">
+                        {report.category}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        {report.language}
+                      </span>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-slate-800 font-sans leading-relaxed">
+                    "{report.text}"
+                  </p>
+
+                  <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between text-[11px] text-slate-500">
+                    <div className="flex items-center gap-3">
+                      <span>Report ID: {report.id}</span>
+                      <span>Date: {report.date}</span>
+                      {report.durationDays && (
+                        <span>Observed: {report.durationDays} days</span>
+                      )}
+                      <span className="text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200 font-medium">
+                        Public: Anonymous Citizen
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={() => navigateTo('civic-issues', report.clusterId)}
+                      className="text-blue-800 hover:text-blue-950 font-semibold inline-flex items-center gap-1"
+                    >
+                      <span>View Correlated Cluster</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

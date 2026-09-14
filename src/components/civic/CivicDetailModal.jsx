@@ -1,0 +1,217 @@
+import React from 'react';
+import { useRaven } from '../../context/RavenContext';
+import TrustBadge from '../common/TrustBadge';
+import ScoresDisplay from './ScoresDisplay';
+import ConfirmationLoop from './ConfirmationLoop';
+import OfficialChannelBox from '../common/OfficialChannelBox';
+import { 
+  X, 
+  MapPin, 
+  Building2, 
+  Camera, 
+  Users, 
+  Layers, 
+  FileText,
+  ShieldCheck
+} from 'lucide-react';
+
+export default function CivicDetailModal({ clusterId, onClose }) {
+  const { civicClusters, civicReports } = useRaven();
+
+  const cluster = civicClusters.find(c => c.id === clusterId);
+  if (!cluster) return null;
+
+  const clusteredReports = civicReports.filter(r => r.clusterId === cluster.id);
+
+  // Collect all real uploaded attachments from clustered reports
+  const allAttachments = clusteredReports.flatMap(r => r.attachments || []);
+  const allImageAttachments = allAttachments.filter(a => a.type?.startsWith('image/') || a.previewUrl);
+
+  return (
+    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-4xl w-full my-8 max-h-[90vh] flex flex-col overflow-hidden">
+        {/* Modal Header */}
+        <div className="p-6 border-b border-slate-200 flex items-start justify-between bg-slate-50/70">
+          <div>
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-900 text-white">
+                {cluster.id}
+              </span>
+              <span className="text-xs font-semibold text-slate-700 bg-slate-200/80 px-2 py-0.5 rounded">
+                {cluster.category}
+              </span>
+              <TrustBadge type={cluster.trustLabel || 'ANALYSIS'} size="xs" />
+            </div>
+            <h2 className="text-xl font-bold text-slate-900">
+              {cluster.title}
+            </h2>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-slate-600">
+              <div className="flex items-center gap-1">
+                <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                <span>{cluster.location}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Building2 className="w-3.5 h-3.5 text-slate-400" />
+                <span>{cluster.department}</span>
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Modal Scrollable Body */}
+        <div className="p-6 overflow-y-auto space-y-6 text-xs text-slate-700">
+          {/* AI Cluster Synthesis */}
+          <div className="bg-purple-50/70 p-4 rounded-lg border border-purple-200">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-purple-900 mb-1 flex items-center gap-1.5">
+              <Layers className="w-3.5 h-3.5 text-purple-600" />
+              Platform Clustered Synthesis
+            </div>
+            <p className="text-xs text-purple-950 leading-relaxed">
+              "{cluster.aiSummary}"
+            </p>
+            {cluster.affectedLocations && (
+              <div className="mt-2 pt-2 border-t border-purple-200/60 flex flex-wrap items-center gap-1">
+                <span className="text-[11px] font-semibold text-purple-900">Correlated Streets:</span>
+                {cluster.affectedLocations.map((loc, idx) => (
+                  <span key={idx} className="bg-white px-2 py-0.5 rounded text-[11px] text-purple-800 border border-purple-200 font-medium">
+                    {loc}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Dual Scores Display */}
+          <div>
+            <ScoresDisplay cluster={cluster} compact={false} />
+          </div>
+
+          {/* Citizen Evidence Gallery (Real Uploaded Images) */}
+          {allImageAttachments.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                  <Camera className="w-3.5 h-3.5 text-teal-700" />
+                  Evidence ({allImageAttachments.length} items)
+                </h3>
+                <span className="text-[11px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 font-medium">
+                  Photo Evidence
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {allImageAttachments.map((img, idx) => (
+                  <div key={idx} className="rounded-lg border border-slate-200 overflow-hidden bg-slate-50">
+                    <img
+                      src={img.previewUrl}
+                      alt={img.name}
+                      className="w-full h-28 object-cover hover:scale-105 transition duration-200"
+                    />
+                    <div className="p-2 text-[11px]">
+                      <div className="font-medium text-slate-800 truncate">{img.name}</div>
+                      <div className="text-[10px] text-slate-400 mt-0.5">Citizen-provided evidence</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Confirmation Loop ("Is this still a problem?") */}
+          <div>
+            <ConfirmationLoop clusterId={cluster.id} />
+          </div>
+
+          {/* Clustered Citizen Reports Section - STRICT ANONYMITY */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5 text-blue-600" />
+                Correlated Ground Reports ({clusteredReports.length} visible in cluster)
+              </h3>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-slate-500 flex items-center gap-1">
+                  <ShieldCheck className="w-3.5 h-3.5 text-teal-700" />
+                  All contributors anonymous
+                </span>
+                {clusteredReports.some(r => !r.isSeeded) && (
+                  <TrustBadge type="CITIZEN" size="xs" />
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-2.5">
+              {clusteredReports.map((report) => (
+                <div key={report.id} className="p-3.5 rounded-lg border border-slate-200 bg-slate-50/50 hover:bg-white transition space-y-1.5">
+                  <div className="flex flex-wrap items-center justify-between gap-1 text-[11px]">
+                    <div className="flex items-center gap-2">
+                      {/* STRICT ANONYMOUS DISPLAY */}
+                      <span className="font-semibold text-slate-900">Anonymous Contributor</span>
+                      <span className="text-slate-400">• {report.location}</span>
+                      {!report.isSeeded && (
+                        <TrustBadge type="CITIZEN" size="xs" />
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 font-mono text-[10px]">
+                        {report.language}
+                      </span>
+                      <span className="text-slate-400">{report.date}</span>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-slate-800 font-sans leading-relaxed">
+                    "{report.text}"
+                  </p>
+
+                  {/* Attachment previews */}
+                  {report.attachments && report.attachments.length > 0 && (
+                    <div className="pt-1.5 flex flex-wrap gap-2">
+                      {report.attachments.map((att, aIdx) => (
+                        <div key={aIdx} className="flex items-center gap-1.5 p-1 rounded border border-slate-200 bg-white text-[11px]">
+                          {att.previewUrl ? (
+                            <img src={att.previewUrl} alt={att.name} className="w-6 h-6 object-cover rounded border" />
+                          ) : (
+                            <FileText className="w-4 h-4 text-slate-400" />
+                          )}
+                          <span className="truncate max-w-[120px] font-medium text-slate-700">{att.name}</span>
+                          {!report.isSeeded ? (
+                            <span className="text-[10px] text-teal-700 font-semibold">• Evidence</span>
+                          ) : (
+                            <span className="text-[10px] text-slate-500 font-medium">• Photo Record</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Official Channel Recommendation */}
+          <div>
+            <OfficialChannelBox channelKey={cluster.officialChannelKey} />
+          </div>
+        </div>
+
+        {/* Modal Footer */}
+        <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded text-xs font-semibold transition"
+          >
+            Close Details
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
