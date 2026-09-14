@@ -3,7 +3,10 @@
  * Proxied seamlessly through /api to Express Backend and Supabase PostgreSQL.
  */
 
-const API_BASE = '/api';
+const rawBase = import.meta.env.VITE_API_BASE_URL || '';
+const API_BASE = rawBase
+  ? (rawBase.endsWith('/api') ? rawBase : `${rawBase.replace(/\/$/, '')}/api`)
+  : '/api';
 
 async function fetchJson(url, options = {}) {
   const res = await fetch(url, {
