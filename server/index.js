@@ -11,6 +11,7 @@ import schemesRouter from './routes/schemes.js';
 import civicRouter from './routes/civic.js';
 import confirmationsRouter from './routes/confirmations.js';
 import profilesRouter from './routes/profiles.js';
+import officialsRouter from './routes/officials.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -73,6 +74,7 @@ app.use('/api/schemes', schemesRouter);
 app.use('/api/civic', civicRouter);
 app.use('/api/confirmations', confirmationsRouter);
 app.use('/api/profiles', profilesRouter);
+app.use('/api/officials', officialsRouter);
 
 // Centralized Error Handling Middleware
 app.use((err, req, res, next) => {

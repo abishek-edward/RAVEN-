@@ -86,8 +86,10 @@ CREATE TABLE IF NOT EXISTS issue_clusters (
   official_channel_key TEXT,
   location TEXT NOT NULL,
   district TEXT NOT NULL,
-  latitude DOUBLE PRECISION DEFAULT 13.0827,
-  longitude DOUBLE PRECISION DEFAULT 80.2707,
+  latitude DOUBLE PRECISION,
+  longitude DOUBLE PRECISION,
+  ward TEXT,
+  constituency TEXT,
   reports_count INTEGER DEFAULT 1,
   confirmations_count INTEGER DEFAULT 0,
   evidence_count INTEGER DEFAULT 0,
@@ -117,6 +119,10 @@ CREATE TABLE IF NOT EXISTS issue_reports (
   language TEXT DEFAULT 'English',
   location TEXT NOT NULL,
   district TEXT NOT NULL,
+  latitude DOUBLE PRECISION,
+  longitude DOUBLE PRECISION,
+  ward TEXT,
+  constituency TEXT,
   category TEXT NOT NULL,
   sub_issue TEXT,
   reported_by TEXT DEFAULT 'Anonymous Citizen',
@@ -139,8 +145,36 @@ CREATE TABLE IF NOT EXISTS confirmations (
   timestamp TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 8. Government Officials Table (Lightweight Demo Official Accounts)
+-- Demo authentication only — plain credentials, no hashing, no session tokens, no production security. Real deployment would require a proper auth system.
+CREATE TABLE IF NOT EXISTS government_officials (
+  id VARCHAR(64) PRIMARY KEY,
+  name TEXT NOT NULL,
+  username VARCHAR(64) UNIQUE NOT NULL,
+  password TEXT NOT NULL,
+  assigned_ward TEXT NOT NULL,
+  assigned_constituency TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Idempotent Column Additions for Existing Tables
+ALTER TABLE issue_clusters ADD COLUMN IF NOT EXISTS ward TEXT;
+ALTER TABLE issue_clusters ADD COLUMN IF NOT EXISTS constituency TEXT;
+ALTER TABLE issue_reports ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION;
+ALTER TABLE issue_reports ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION;
+ALTER TABLE issue_reports ADD COLUMN IF NOT EXISTS ward TEXT;
+ALTER TABLE issue_reports ADD COLUMN IF NOT EXISTS constituency TEXT;
+ALTER TABLE government_officials ADD COLUMN IF NOT EXISTS username VARCHAR(64);
+ALTER TABLE government_officials ADD COLUMN IF NOT EXISTS password TEXT;
+ALTER TABLE government_officials ADD COLUMN IF NOT EXISTS assigned_ward TEXT;
+ALTER TABLE government_officials ADD COLUMN IF NOT EXISTS assigned_constituency TEXT;
+
 -- Performance Indexes
 CREATE INDEX IF NOT EXISTS idx_scheme_reports_scheme ON scheme_reports(scheme_id);
 CREATE INDEX IF NOT EXISTS idx_scheme_clusters_scheme ON scheme_clusters(scheme_id);
 CREATE INDEX IF NOT EXISTS idx_issue_reports_cluster ON issue_reports(cluster_id);
 CREATE INDEX IF NOT EXISTS idx_confirmations_cluster ON confirmations(cluster_id);
+CREATE INDEX IF NOT EXISTS idx_issue_clusters_ward ON issue_clusters(ward);
+
+
+

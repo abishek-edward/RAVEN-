@@ -269,6 +269,7 @@ Submission Mode: Manually Submitted by RAVEN Admin via Public Grievance Portal (
                       <option value="Escalation">Escalation</option>
                       <option value="Monitoring">Monitoring</option>
                       <option value="Resolved">Resolved</option>
+                      <option value="Active">Active</option>
                     </select>
                   </div>
                 </div>

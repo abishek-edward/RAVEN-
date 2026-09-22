@@ -69,6 +69,16 @@ export const api = {
     fetchJson(`${API_BASE}/civic/clusters/${clusterId}/analyze`, {
       method: 'POST',
     }),
+  updateClusterStatus: (clusterId, status, role) =>
+    fetchJson(`${API_BASE}/civic/clusters/${clusterId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status, role }),
+    }),
+  updateReportStatus: (reportId, status, role) =>
+    fetchJson(`${API_BASE}/civic/reports/${reportId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status, role }),
+    }),
 
   // Confirmations
   getConfirmations: () => fetchJson(`${API_BASE}/confirmations`),
@@ -80,6 +90,18 @@ export const api = {
 
   // Profiles
   getProfiles: () => fetchJson(`${API_BASE}/profiles`),
+
+  // Government Official (Demo Prototype)
+  loginOfficial: (username, password) =>
+    fetchJson(`${API_BASE}/officials/login`, {
+      method: 'POST',
+      body: JSON.stringify({ username, password }),
+    }),
+  getDemoOfficials: () => fetchJson(`${API_BASE}/officials/demo-accounts`),
+  getCivicClustersByWard: (ward) =>
+    fetchJson(`${API_BASE}/civic/clusters?ward=${encodeURIComponent(ward)}`),
+  getCivicClustersByConstituency: (constituency) =>
+    fetchJson(`${API_BASE}/civic/clusters?constituency=${encodeURIComponent(constituency)}`),
 };
 
 export default api;

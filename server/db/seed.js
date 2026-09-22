@@ -21,7 +21,36 @@ export async function runMigrationsAndSeed() {
 
   try {
     await query(schemaSql);
-    console.log('✅ [Migration] PostgreSQL schema created/verified successfully.');
+    // Dynamic column migrations for safety on existing databases
+    await query(`
+      ALTER TABLE issue_clusters ADD COLUMN IF NOT EXISTS ward TEXT;
+      ALTER TABLE issue_clusters ADD COLUMN IF NOT EXISTS constituency TEXT;
+      ALTER TABLE issue_reports ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION;
+      ALTER TABLE issue_reports ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION;
+      ALTER TABLE issue_reports ADD COLUMN IF NOT EXISTS ward TEXT;
+      ALTER TABLE issue_reports ADD COLUMN IF NOT EXISTS constituency TEXT;
+      ALTER TABLE government_officials ADD COLUMN IF NOT EXISTS username VARCHAR(64);
+      ALTER TABLE government_officials ADD COLUMN IF NOT EXISTS password TEXT;
+      ALTER TABLE government_officials ADD COLUMN IF NOT EXISTS assigned_ward TEXT;
+      ALTER TABLE government_officials ADD COLUMN IF NOT EXISTS assigned_constituency TEXT;
+      DO $$ BEGIN
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'government_officials' AND column_name = 'official_identifier') THEN
+          ALTER TABLE government_officials ALTER COLUMN official_identifier DROP NOT NULL;
+        END IF;
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'government_officials' AND column_name = 'department') THEN
+          ALTER TABLE government_officials ALTER COLUMN department DROP NOT NULL;
+        END IF;
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'government_officials' AND column_name = 'designation') THEN
+          ALTER TABLE government_officials ALTER COLUMN designation DROP NOT NULL;
+        END IF;
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'government_officials' AND column_name = 'email') THEN
+          ALTER TABLE government_officials ALTER COLUMN email DROP NOT NULL;
+        END IF;
+      EXCEPTION WHEN OTHERS THEN NULL;
+      END $$;
+      CREATE INDEX IF NOT EXISTS idx_issue_clusters_ward ON issue_clusters(ward);
+    `);
+    console.log('✅ [Migration] PostgreSQL schema and columns created/verified successfully.');
   } catch (err) {
     console.error('❌ [Migration] Error creating schema:', err.message);
     throw err;
@@ -180,13 +209,13 @@ export async function runMigrationsAndSeed() {
       await query(
         `INSERT INTO issue_clusters (
           id, title, category, department, official_channel_key,
-          location, district, latitude, longitude, reports_count,
+          location, district, latitude, longitude, ward, constituency, reports_count,
           confirmations_count, evidence_count, affected_locations,
           severity, duration_days, public_support_score, ai_priority_data,
           status, first_reported_date, last_reported_date, trust_label,
           ai_summary, common_keywords, relevant_official_channels,
           grievance_status, official_response
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28)
         ON CONFLICT (id) DO NOTHING`,
         [
           c.id,
@@ -196,8 +225,10 @@ export async function runMigrationsAndSeed() {
           c.officialChannelKey,
           c.location,
           c.district,
-          c.coordinates ? c.coordinates[0] : 13.0827,
-          c.coordinates ? c.coordinates[1] : 80.2707,
+          c.coordinates ? c.coordinates[0] : null,
+          c.coordinates ? c.coordinates[1] : null,
+          c.ward || null,
+          c.constituency || null,
           c.reportsCount || 1,
           c.confirmationsCount || 0,
           c.evidenceCount || 0,
@@ -220,7 +251,15 @@ export async function runMigrationsAndSeed() {
     }
     console.log(`✅ [Seed] ${INITIAL_CIVIC_CLUSTERS.length} civic clusters seeded.`);
   } else {
-    console.log('ℹ️ [Seed] Civic clusters table already populated.');
+    // Ensure existing seeded clusters have verified demo ward/constituency mappings
+    await query(`
+      UPDATE issue_clusters SET ward = 'GCC Ward 70 / Zone 6 (Thiru-Vi-Ka Nagar)', constituency = 'Thiru-Vi-Ka Nagar Assembly' WHERE id = 'CI-1024' AND (ward IS NULL OR ward = '');
+      UPDATE issue_clusters SET ward = 'GCC Ward 104 / Zone 8 (Anna Nagar)', constituency = 'Anna Nagar Assembly' WHERE id = 'CI-1025' AND (ward IS NULL OR ward = '');
+      UPDATE issue_clusters SET ward = 'GCC Ward 127 / Zone 10 (Kodambakkam)', constituency = 'Maduravoyal Assembly' WHERE id = 'CI-1026' AND (ward IS NULL OR ward = '');
+      UPDATE issue_clusters SET ward = 'GCC Ward 172 / Zone 13 (Adyar)', constituency = 'Velachery Assembly' WHERE id = 'CI-1027' AND (ward IS NULL OR ward = '');
+      UPDATE issue_clusters SET ward = 'GCC Ward 117 / Zone 9 (T. Nagar)', constituency = 'T. Nagar Assembly' WHERE id = 'CI-1028' AND (ward IS NULL OR ward = '');
+    `);
+    console.log('ℹ️ [Seed] Civic clusters table verified and updated with verified demo jurisdictions.');
   }
 
   // 7. Seed Civic Reports
@@ -286,6 +325,60 @@ export async function runMigrationsAndSeed() {
   } else {
     console.log('ℹ️ [Seed] Confirmations table already populated.');
   }
+
+  // 9. Seed Demo Government Officials
+  console.log('🌱 [Seed] Seeding demo government officials...');
+  // Demo authentication only — plain credentials, no hashing, no session tokens, no production security. Real deployment would require a proper auth system.
+  const demoOfficials = [
+    {
+      id: 'gov-off-01',
+      name: 'Demo Officer (Perambur)',
+      username: 'perambur.officer',
+      password: 'perambur123',
+      assigned_ward: 'GCC Ward 70 / Zone 6 (Thiru-Vi-Ka Nagar)',
+      assigned_constituency: 'Thiru-Vi-Ka Nagar Assembly'
+    },
+    {
+      id: 'gov-off-02',
+      name: 'Demo Officer (Anna Nagar)',
+      username: 'anna.officer',
+      password: 'annanagar123',
+      assigned_ward: 'GCC Ward 104 / Zone 8 (Anna Nagar)',
+      assigned_constituency: 'Anna Nagar Assembly'
+    },
+    {
+      id: 'gov-off-03',
+      name: 'Demo Officer (Velachery)',
+      username: 'velachery.officer',
+      password: 'velachery123',
+      assigned_ward: 'GCC Ward 172 / Zone 13 (Adyar)',
+      assigned_constituency: 'Velachery Assembly'
+    },
+    {
+      id: 'gov-off-04',
+      name: 'Demo Officer (T. Nagar)',
+      username: 'tnagar.officer',
+      password: 'tnagar123',
+      assigned_ward: 'GCC Ward 117 / Zone 9 (T. Nagar)',
+      assigned_constituency: 'T. Nagar Assembly'
+    }
+  ];
+
+  for (const off of demoOfficials) {
+    await query(
+      `INSERT INTO government_officials (id, name, username, password, assigned_ward, assigned_constituency, official_identifier)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       ON CONFLICT (id) DO UPDATE SET
+         name = EXCLUDED.name,
+         username = EXCLUDED.username,
+         password = EXCLUDED.password,
+         assigned_ward = EXCLUDED.assigned_ward,
+         assigned_constituency = EXCLUDED.assigned_constituency,
+         official_identifier = EXCLUDED.official_identifier`,
+      [off.id, off.name, off.username, off.password, off.assigned_ward, off.assigned_constituency, off.id]
+    );
+  }
+  console.log(`✅ [Seed] ${demoOfficials.length} demo government officials verified.`);
 
   console.log('🎉 [Migration & Seed] Database is ready and fully synced with RAVEN entities!');
 }

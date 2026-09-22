@@ -22,7 +22,8 @@ export default function Header() {
     setLanguage, 
     theme, 
     toggleTheme, 
-    t 
+    t,
+    officialSession
   } = useRaven();
   const isAdmin = profile.role === 'Admin';
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
@@ -127,6 +128,26 @@ export default function Header() {
               >
                 <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
                 <span>{t('navAdmin')}</span>
+              </button>
+            )}
+
+            {/* Gov Portal Link (Admin Only) */}
+            {isAdmin && (
+              <button
+                onClick={() => handleNav('official-portal')}
+                className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-md transition border ${
+                  currentPage === 'official-portal'
+                    ? 'bg-teal-950/80 text-teal-300 border-teal-500 font-semibold'
+                    : officialSession
+                      ? 'bg-teal-950/40 text-teal-300 border-teal-600/70 hover:bg-teal-900/60'
+                      : 'text-slate-300 border-slate-700 hover:bg-slate-800/60 hover:text-white'
+                }`}
+              >
+                <Building2 className="w-3.5 h-3.5 text-teal-400" />
+                <span>{officialSession ? 'Gov Portal (Active)' : 'Gov Portal'}</span>
+                {officialSession && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
+                )}
               </button>
             )}
 
@@ -303,6 +324,21 @@ export default function Header() {
                 className={`w-full text-left px-3 py-2 rounded text-amber-400 font-semibold ${currentPage === 'admin' ? 'bg-amber-950/80' : ''}`}
               >
                 {t('navAdmin')}
+              </button>
+            )}
+            {isAdmin && (
+              <button
+                onClick={() => handleNav('official-portal')}
+                className={`w-full text-left px-3 py-2 rounded font-semibold flex items-center justify-between ${
+                  currentPage === 'official-portal' ? 'bg-slate-800 text-teal-300' : 'text-slate-300'
+                }`}
+              >
+                <span>Government Portal</span>
+                {officialSession && (
+                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-teal-900 text-teal-300">
+                    {officialSession.username}
+                  </span>
+                )}
               </button>
             )}
             <button

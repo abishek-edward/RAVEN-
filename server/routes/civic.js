@@ -2,11 +2,14 @@ import express from 'express';
 import { query } from '../db/client.js';
 import { calculateAIAssistedPriorityScore } from '../services/priorityService.js';
 import { correlateCivicCluster, generatePriorityExplanation } from '../services/aiService.js';
+import { resolveFastTriggerAuthorityServer, resolveJurisdictionByCoordinates } from '../services/authorityResolver.js';
+import { assessReportEvidenceServer } from '../services/evidenceService.js';
 
 const router = express.Router();
 
 // Helper to format civic cluster row
 function formatCluster(row) {
+  const hasCoordinates = row.latitude != null && row.longitude != null && !isNaN(Number(row.latitude)) && !isNaN(Number(row.longitude));
   return {
     id: row.id,
     title: row.title,
@@ -15,7 +18,11 @@ function formatCluster(row) {
     officialChannelKey: row.official_channel_key,
     location: row.location,
     district: row.district,
-    coordinates: [row.latitude || 13.0827, row.longitude || 80.2707],
+    latitude: hasCoordinates ? Number(row.latitude) : null,
+    longitude: hasCoordinates ? Number(row.longitude) : null,
+    coordinates: hasCoordinates ? [Number(row.latitude), Number(row.longitude)] : null,
+    ward: row.ward || null,
+    constituency: row.constituency || null,
     reportsCount: row.reports_count,
     confirmationsCount: row.confirmations_count,
     evidenceCount: row.evidence_count,
@@ -38,6 +45,7 @@ function formatCluster(row) {
 
 // Helper to format civic report row
 function formatCivicReport(row) {
+  const hasCoordinates = row.latitude != null && row.longitude != null && !isNaN(Number(row.latitude)) && !isNaN(Number(row.longitude));
   return {
     id: row.id,
     clusterId: row.cluster_id,
@@ -46,6 +54,11 @@ function formatCivicReport(row) {
     language: row.language,
     location: row.location,
     district: row.district,
+    latitude: hasCoordinates ? Number(row.latitude) : null,
+    longitude: hasCoordinates ? Number(row.longitude) : null,
+    coordinates: hasCoordinates ? [Number(row.latitude), Number(row.longitude)] : null,
+    ward: row.ward || null,
+    constituency: row.constituency || null,
     category: row.category,
     subIssue: row.sub_issue,
     reportedBy: row.reported_by,
@@ -60,10 +73,29 @@ function formatCivicReport(row) {
   };
 }
 
-// 1. GET /api/civic/clusters — Fetch all clusters
+// 1. GET /api/civic/clusters — Fetch all clusters with optional server-side SQL ward/constituency filtering
 router.get('/clusters', async (req, res) => {
+  const { ward, constituency } = req.query;
+
+  // Filtering is enforced server-side via SQL WHERE clause on ward/constituency — this is real, but there is no session-token verification, so a technically sophisticated user could still forge a request. Production deployment would need JWT/session-based auth to close this gap.
   try {
-    const result = await query('SELECT * FROM issue_clusters ORDER BY reports_count DESC');
+    let sql = 'SELECT * FROM issue_clusters';
+    const params = [];
+
+    if (ward && constituency) {
+      sql += ' WHERE ward = $1 AND constituency = $2';
+      params.push(ward, constituency);
+    } else if (ward) {
+      sql += ' WHERE ward = $1';
+      params.push(ward);
+    } else if (constituency) {
+      sql += ' WHERE constituency = $1';
+      params.push(constituency);
+    }
+
+    sql += ' ORDER BY reports_count DESC';
+
+    const result = await query(sql, params);
     res.json(result.rows.map(formatCluster));
   } catch (err) {
     console.error('Error fetching civic clusters:', err);
@@ -99,8 +131,79 @@ router.get('/clusters/:id', async (req, res) => {
 
     res.json({ cluster, reports });
   } catch (err) {
-    console.error('Error fetching cluster details:', err);
+    console.error('Error fetching civic cluster detail:', err);
     res.status(500).json({ error: 'Failed to retrieve cluster' });
+  }
+});
+
+// 3b. PATCH /api/civic/clusters/:id/status — Admin-only status update with persistence
+router.patch('/clusters/:id/status', async (req, res) => {
+  const { id } = req.params;
+  const { status, role } = req.body;
+
+  // Role check: Only authorized Admin users can edit official issue status
+  if (role !== 'Admin') {
+    return res.status(403).json({ error: 'Unauthorized: Only Admin users can edit official issue status' });
+  }
+
+  const validStatuses = ['Ready', 'Escalation', 'Monitoring', 'Resolved', 'Active'];
+  if (!status || !validStatuses.includes(status)) {
+    return res.status(400).json({ 
+      error: `Invalid status. Allowed values: ${validStatuses.join(', ')}` 
+    });
+  }
+
+  try {
+    const updateRes = await query(
+      `UPDATE issue_clusters
+       SET status = $1, last_reported_date = CURRENT_DATE
+       WHERE id = $2
+       RETURNING *`,
+      [status, id]
+    );
+
+    if (updateRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Cluster not found' });
+    }
+
+    const updated = formatCluster(updateRes.rows[0]);
+    res.json(updated);
+  } catch (err) {
+    console.error('Error updating cluster status in DB:', err);
+    res.status(500).json({ error: 'Failed to update cluster status' });
+  }
+});
+
+// 3c. PATCH /api/civic/reports/:id/status — Admin-only report status update with persistence
+router.patch('/reports/:id/status', async (req, res) => {
+  const { id } = req.params;
+  const { status, role } = req.body;
+
+  if (role !== 'Admin') {
+    return res.status(403).json({ error: 'Unauthorized: Only Admin users can edit report status' });
+  }
+
+  const validReportStatuses = ['Citizen-Reported', 'Corroborated', 'Under Review', 'Escalated', 'Resolved', 'Initial Reference'];
+  if (!status || !validReportStatuses.includes(status)) {
+    return res.status(400).json({ 
+      error: `Invalid report status. Allowed values: ${validReportStatuses.join(', ')}` 
+    });
+  }
+
+  try {
+    const updateRes = await query(
+      `UPDATE issue_reports SET status = $1 WHERE id = $2 RETURNING *`,
+      [status, id]
+    );
+
+    if (updateRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+
+    res.json(formatCivicReport(updateRes.rows[0]));
+  } catch (err) {
+    console.error('Error updating report status in DB:', err);
+    res.status(500).json({ error: 'Failed to update report status' });
   }
 });
 
@@ -111,14 +214,23 @@ router.post('/reports', async (req, res) => {
     category,
     location,
     district,
+    latitude,
+    longitude,
     durationDays,
     attachments = [],
     userId = 'demo-citizen-01',
     language = 'English'
   } = req.body;
 
+  // Strict required fields validation
   if (!text || !text.trim()) {
-    return res.status(400).json({ error: 'Report text is required' });
+    return res.status(400).json({ error: 'Report description text is required' });
+  }
+  if (!category || !category.trim()) {
+    return res.status(400).json({ error: 'Issue category is required' });
+  }
+  if (!location || !location.trim()) {
+    return res.status(400).json({ error: 'Issue location is required' });
   }
 
   const reportId = `CR-${Date.now().toString().slice(-4)}`;
@@ -126,7 +238,24 @@ router.post('/reports', async (req, res) => {
   const imageAttachment = attachmentList.find(a => a.type?.startsWith('image/') || a.previewUrl);
   const parsedDuration = parseInt(durationDays, 10) || 7;
   const userDistrict = district || 'Chennai';
-  const userLocation = location || `${userDistrict} Local Area`;
+  const userLocation = location.trim();
+
+  // Validate submitted coordinates — real GPS integrity
+  const parsedLat = parseFloat(latitude);
+  const parsedLng = parseFloat(longitude);
+  const hasValidCoordinates = 
+    latitude != null && 
+    longitude != null && 
+    !isNaN(parsedLat) && 
+    !isNaN(parsedLng) && 
+    parsedLat >= -90 && parsedLat <= 90 && 
+    parsedLng >= -180 && parsedLng <= 180;
+
+  const validLatitude = hasValidCoordinates ? parsedLat : null;
+  const validLongitude = hasValidCoordinates ? parsedLng : null;
+
+  // Resolve jurisdiction on SERVER using GPS coordinates as primary, location text as keyword fallback, and Unassigned if neither matches
+  const resolvedJurisdiction = resolveJurisdictionByCoordinates(validLatitude, validLongitude, userLocation);
 
   try {
     // 1. Fetch existing clusters to find correlation
@@ -164,6 +293,15 @@ router.post('/reports', async (req, res) => {
         evidenceCount: newEvidenceCount
       });
 
+      // Existing cluster case:
+      // - Do NOT blindly replace cluster's canonical coordinates
+      // - Preserve existing cluster coordinate unless null
+      // - If existing cluster has no ward/constituency yet, populate from resolved jurisdiction
+      const finalWard = (matched.ward && matched.ward !== 'Unassigned') ? matched.ward : resolvedJurisdiction.ward;
+      const finalConstituency = (matched.constituency && matched.constituency !== 'Unassigned') ? matched.constituency : resolvedJurisdiction.constituency;
+      const finalLatitude = matched.latitude != null ? matched.latitude : validLatitude;
+      const finalLongitude = matched.longitude != null ? matched.longitude : validLongitude;
+
       const updateSql = `
         UPDATE issue_clusters SET
           reports_count = $1,
@@ -171,8 +309,12 @@ router.post('/reports', async (req, res) => {
           duration_days = $3,
           affected_locations = $4,
           ai_priority_data = $5,
+          ward = $6,
+          constituency = $7,
+          latitude = $8,
+          longitude = $9,
           last_reported_date = CURRENT_DATE
-        WHERE id = $6
+        WHERE id = $10
         RETURNING *
       `;
       const updateRes = await query(updateSql, [
@@ -181,6 +323,10 @@ router.post('/reports', async (req, res) => {
         newDuration,
         JSON.stringify(updatedLocations),
         JSON.stringify(newAiScore),
+        finalWard,
+        finalConstituency,
+        finalLatitude,
+        finalLongitude,
         matched.id
       ]);
 
@@ -188,6 +334,14 @@ router.post('/reports', async (req, res) => {
     } else {
       // Create new cluster proposal
       const cData = correlationResult.clusterData;
+
+      // STRICT: Citizen GPS must override AI/default cluster coordinates
+      // Never allow AI-generated/default coordinates to replace valid citizen submitted coordinates.
+      // If no valid coordinates were submitted, keep null.
+      cData.latitude = validLatitude;
+      cData.longitude = validLongitude;
+      cData.ward = resolvedJurisdiction.ward;
+      cData.constituency = resolvedJurisdiction.constituency;
 
       // Calculate initial deterministic priority score
       const initialAiScore = calculateAIAssistedPriorityScore({
@@ -202,13 +356,13 @@ router.post('/reports', async (req, res) => {
       const insertClusterSql = `
         INSERT INTO issue_clusters (
           id, title, category, department, official_channel_key,
-          location, district, latitude, longitude, reports_count,
-          confirmations_count, evidence_count, affected_locations,
+          location, district, latitude, longitude, ward, constituency,
+          reports_count, confirmations_count, evidence_count, affected_locations,
           severity, duration_days, public_support_score, ai_priority_data,
           status, first_reported_date, last_reported_date, trust_label,
           ai_summary, common_keywords, relevant_official_channels,
           grievance_status, official_response
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28)
         RETURNING *
       `;
       const clusterRes = await query(insertClusterSql, [
@@ -221,6 +375,8 @@ router.post('/reports', async (req, res) => {
         cData.district,
         cData.latitude,
         cData.longitude,
+        cData.ward,
+        cData.constituency,
         cData.reportsCount,
         cData.confirmationsCount,
         cData.evidenceCount,
@@ -247,10 +403,10 @@ router.post('/reports', async (req, res) => {
     const insertReportSql = `
       INSERT INTO issue_reports (
         id, cluster_id, user_id, text, language,
-        location, district, category, sub_issue,
-        reported_by, is_anonymous, date, attachments,
+        location, district, latitude, longitude, ward, constituency,
+        category, sub_issue, reported_by, is_anonymous, date, attachments,
         has_photo, photo_url, duration_days, status
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, CURRENT_DATE, $12, $13, $14, $15, 'Citizen-Reported')
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, CURRENT_DATE, $16, $17, $18, $19, 'Citizen-Reported')
       RETURNING *
     `;
 
@@ -262,6 +418,10 @@ router.post('/reports', async (req, res) => {
       language,
       userLocation,
       userDistrict,
+      validLatitude,
+      validLongitude,
+      resolvedJurisdiction.ward,
+      resolvedJurisdiction.constituency,
       category,
       category,
       'Anonymous Citizen',
@@ -274,9 +434,39 @@ router.post('/reports', async (req, res) => {
 
     const createdReport = formatCivicReport(reportRes.rows[0]);
 
+    // Fast Trigger & Evidence Assessment computation
+    const evidenceAssessment = assessReportEvidenceServer({
+      attachments: attachmentList,
+      category,
+      reportText: text
+    });
+
+    const fastTrigger = resolveFastTriggerAuthorityServer({
+      category,
+      location: userLocation,
+      district: userDistrict,
+      cluster: targetCluster
+    });
+
+    const citizenFastResponse = {
+      acknowledgement: 'Your report has been received.',
+      clusterAssociation: correlationResult.isNewCluster
+        ? `A new civic issue cluster (${targetCluster.id}) has been initiated for your area.`
+        : `Your report appears related to an existing civic issue in your area (Cluster ${targetCluster.id}).`,
+      officialStatus: targetCluster.officialResponse
+        ? `Official response received: ${targetCluster.officialResponse}`
+        : 'No official response received yet.',
+      evidenceAssessment,
+      fastTrigger
+    };
+
+    createdReport.evidenceAssessment = evidenceAssessment;
+    targetCluster.fastTrigger = fastTrigger;
+
     res.status(201).json({
       report: createdReport,
-      cluster: targetCluster
+      cluster: targetCluster,
+      citizenFastResponse
     });
   } catch (err) {
     console.error('Error submitting civic report:', err);

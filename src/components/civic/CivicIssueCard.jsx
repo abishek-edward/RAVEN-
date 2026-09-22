@@ -9,8 +9,17 @@ import {
   Camera
 } from 'lucide-react';
 
+import { resolveFastTriggerAuthority } from '../../utils/authorityResolver';
+
 export default function CivicIssueCard({ cluster, onSelect }) {
   const { t } = useRaven();
+
+  const fastTrigger = cluster.fastTrigger || resolveFastTriggerAuthority({
+    category: cluster.category,
+    location: cluster.location,
+    district: cluster.district,
+    cluster
+  });
 
   return (
     <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-6 shadow-sm hover:shadow-md transition flex flex-col justify-between">
@@ -24,6 +33,16 @@ export default function CivicIssueCard({ cluster, onSelect }) {
             <span className="text-xs font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700/80 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-600">
               {cluster.category}
             </span>
+            {cluster.status && (
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
+                cluster.status === 'Resolved' ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800' :
+                cluster.status === 'Escalation' ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border-rose-300 dark:border-rose-800' :
+                cluster.status === 'Monitoring' ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border-blue-300 dark:border-blue-800' :
+                'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-800'
+              }`}>
+                {cluster.status}
+              </span>
+            )}
           </div>
           <TrustBadge type={cluster.trustLabel || 'ANALYSIS'} size="xs" />
         </div>
@@ -33,8 +52,8 @@ export default function CivicIssueCard({ cluster, onSelect }) {
           {cluster.title}
         </h3>
 
-        {/* Location & Department */}
-        <div className="mt-2.5 space-y-1 text-xs text-slate-500 dark:text-slate-400">
+        {/* Location, Department & Ward Fast Trigger */}
+        <div className="mt-2.5 space-y-1.5 text-xs text-slate-500 dark:text-slate-400">
           <div className="flex items-center gap-1.5">
             <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             <span className="font-medium text-slate-700 dark:text-slate-300">{cluster.location}</span>
@@ -42,6 +61,11 @@ export default function CivicIssueCard({ cluster, onSelect }) {
           <div className="flex items-start gap-1.5">
             <Building2 className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
             <span className="line-clamp-1">{cluster.department}</span>
+          </div>
+          <div className="pt-0.5">
+            <span className="font-mono text-[10px] bg-blue-50 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-800 inline-block">
+              Target Authority: {fastTrigger.ward}
+            </span>
           </div>
         </div>
 

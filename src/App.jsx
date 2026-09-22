@@ -9,10 +9,11 @@ import CivicMapPage from './pages/CivicMapPage';
 import MyReportsPage from './pages/MyReportsPage';
 import ProfilePage from './pages/ProfilePage';
 import AdminPage from './pages/AdminPage';
+import GovernmentPortalPage from './pages/GovernmentPortalPage';
 import TrustBadge from './components/common/TrustBadge';
 
 function MainContent() {
-  const { currentPage, navigateTo, resetDemoData, t } = useRaven();
+  const { currentPage, profile, navigateTo, resetDemoData, t } = useRaven();
 
   const renderPage = () => {
     switch (currentPage) {
@@ -31,7 +32,11 @@ function MainContent() {
       case 'profile':
         return <ProfilePage />;
       case 'admin':
+        if (profile.role !== 'Admin') return <ProfilePage />;
         return <AdminPage />;
+      case 'official-portal':
+        if (profile.role !== 'Admin') return <LandingPage />;
+        return <GovernmentPortalPage />;
       default:
         return <LandingPage />;
     }

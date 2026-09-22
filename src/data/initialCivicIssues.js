@@ -1,4 +1,6 @@
 import { calculateAIAssistedPriorityScore } from '../utils/priorityCalculator.js';
+import { resolveFastTriggerAuthority } from '../utils/authorityResolver.js';
+import { assessReportEvidence } from '../utils/evidenceAssessor.js';
 
 // Individual ground reports grouped under clusters
 export const INITIAL_CIVIC_REPORTS = [
@@ -185,6 +187,8 @@ export const INITIAL_CIVIC_CLUSTERS = [
     location: 'Perambur, Stephenson Road & Bharathi Nagar',
     district: 'Chennai',
     coordinates: [13.1098, 80.2452],
+    ward: 'GCC Ward 70 / Zone 6 (Thiru-Vi-Ka Nagar)',
+    constituency: 'Thiru-Vi-Ka Nagar Assembly',
     reportsCount: 200,
     confirmationsCount: 137,
     evidenceCount: 42,
@@ -222,6 +226,8 @@ export const INITIAL_CIVIC_CLUSTERS = [
     location: 'Koyambedu Wholesale Market Complex & E Road Junction',
     district: 'Chennai',
     coordinates: [13.0694, 80.1948],
+    ward: 'GCC Ward 127 / Zone 10 (Kodambakkam)',
+    constituency: 'Maduravoyal Assembly',
     reportsCount: 156,
     confirmationsCount: 110,
     evidenceCount: 31,
@@ -259,6 +265,8 @@ export const INITIAL_CIVIC_CLUSTERS = [
     location: 'Anna Nagar, 6th Avenue & 2nd Main Rd Junction',
     district: 'Chennai',
     coordinates: [13.0850, 80.2101],
+    ward: 'GCC Ward 104 / Zone 8 (Anna Nagar)',
+    constituency: 'Anna Nagar Assembly',
     reportsCount: 93,
     confirmationsCount: 68,
     evidenceCount: 24,
@@ -296,6 +304,8 @@ export const INITIAL_CIVIC_CLUSTERS = [
     location: 'Velachery Main Road near Vijayanagar Bypass',
     district: 'Chennai',
     coordinates: [12.9815, 80.2180],
+    ward: 'GCC Ward 172 / Zone 13 (Adyar)',
+    constituency: 'Velachery Assembly',
     reportsCount: 118,
     confirmationsCount: 84,
     evidenceCount: 38,
@@ -333,6 +343,8 @@ export const INITIAL_CIVIC_CLUSTERS = [
     location: 'Usman Road near Ranganathan Street Entrance',
     district: 'Chennai',
     coordinates: [13.0418, 80.2337],
+    ward: 'GCC Ward 117 / Zone 9 (T. Nagar)',
+    constituency: 'T. Nagar Assembly',
     reportsCount: 62,
     confirmationsCount: 45,
     evidenceCount: 19,
@@ -362,3 +374,22 @@ export const INITIAL_CIVIC_CLUSTERS = [
     officialResponse: null
   }
 ];
+
+// Dynamically attach Fast Trigger Authority details to seed clusters
+INITIAL_CIVIC_CLUSTERS.forEach(cluster => {
+  cluster.fastTrigger = resolveFastTriggerAuthority({
+    category: cluster.category,
+    location: cluster.location,
+    district: cluster.district,
+    cluster
+  });
+});
+
+// Dynamically attach Evidence Assessment to seed reports
+INITIAL_CIVIC_REPORTS.forEach(report => {
+  report.evidenceAssessment = assessReportEvidence({
+    attachments: report.attachments || [],
+    category: report.category,
+    reportText: report.text
+  });
+});

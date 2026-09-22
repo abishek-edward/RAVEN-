@@ -7,6 +7,8 @@ import { INITIAL_CONFIRMATIONS } from '../data/initialConfirmations';
 import { calculateAIAssistedPriorityScore } from '../utils/priorityCalculator';
 import { detectLanguage } from '../utils/languageDetector';
 import { TRANSLATIONS } from '../constants/translations';
+import { resolveFastTriggerAuthority } from '../utils/authorityResolver';
+import { assessReportEvidence } from '../utils/evidenceAssessor';
 
 const RavenContext = createContext(null);
 
@@ -50,6 +52,37 @@ export function RavenProvider({ children }) {
     const newProfile = roleName === 'Admin' ? DEMO_PROFILES.Admin : DEMO_PROFILES.Citizen;
     setProfile(newProfile);
     localStorage.setItem('raven_profile', JSON.stringify(newProfile));
+    if (newProfile.role !== 'Admin' && (currentPage === 'admin' || currentPage === 'official-portal')) {
+      setCurrentPage('landing');
+      try {
+        window.history.pushState({}, '', '/');
+      } catch (e) {}
+    }
+  };
+
+  // 1b. Government Official Demo Session (coexists with Citizen/Admin without disruption)
+  const [officialSession, setOfficialSession] = useState(() => {
+    const saved = localStorage.getItem('raven_official_session');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  });
+
+  const loginOfficial = async (username, password) => {
+    const result = await api.loginOfficial(username, password);
+    setOfficialSession(result);
+    localStorage.setItem('raven_official_session', JSON.stringify(result));
+    return result;
+  };
+
+  const logoutOfficial = () => {
+    setOfficialSession(null);
+    localStorage.removeItem('raven_official_session');
   };
 
   // 2. Schemes
@@ -210,7 +243,24 @@ export function RavenProvider({ children }) {
     if (path === 'dashboard') {
       return 'landing';
     }
-    if (['schemes', 'civic-issues', 'civic-map', 'my-reports', 'profile', 'admin'].includes(path)) {
+
+    let savedRole = 'Citizen';
+    try {
+      const p = JSON.parse(localStorage.getItem('raven_profile'));
+      if (p?.role) savedRole = p.role;
+    } catch (e) {}
+
+    // Role-protected routes: block non-admins from direct URL entry
+    if (['official-portal', 'gov-portal'].includes(path)) {
+      if (savedRole === 'Admin') return 'official-portal';
+      return 'landing';
+    }
+    if (path === 'admin') {
+      if (savedRole === 'Admin') return 'admin';
+      return 'landing';
+    }
+
+    if (['schemes', 'civic-issues', 'civic-map', 'my-reports', 'profile'].includes(path)) {
       return path;
     }
     return 'landing';
@@ -348,6 +398,11 @@ export function RavenProvider({ children }) {
     // Role protection: block Citizen from Admin page
     if (page === 'admin' && profile.role !== 'Admin') {
       page = 'profile';
+    }
+
+    // Role protection: block Citizen from Government Portal
+    if ((page === 'official-portal' || page === 'gov-portal') && profile.role !== 'Admin') {
+      page = 'landing';
     }
 
     let urlPath = '/';
@@ -492,7 +547,7 @@ export function RavenProvider({ children }) {
   };
 
   // Submit Everyday Civic Issue Report
-  const addCivicReport = async ({ text, category, location, district, durationDays, attachments }) => {
+  const addCivicReport = async ({ text, category, location, district, latitude, longitude, durationDays, attachments }) => {
     const detectedLang = detectLanguage(text);
     const reportId = `CR-${Date.now().toString().slice(-4)}`;
     const attachmentList = Array.isArray(attachments) ? attachments : [];
@@ -501,13 +556,15 @@ export function RavenProvider({ children }) {
     const userDistrict = district || profile.district;
     const parsedDuration = parseInt(durationDays, 10) || 7;
 
-    // Send to Supabase through backend API
+    // Send to Supabase through backend API with real GPS coordinates
     try {
       const res = await api.submitCivicReport({
         text,
         category,
         location: userLocation,
         district: userDistrict,
+        latitude,
+        longitude,
         durationDays: parsedDuration,
         attachments: attachmentList,
         userId: profile.id,
@@ -529,13 +586,38 @@ export function RavenProvider({ children }) {
       console.warn('Backend civic issue report persistence notice:', err.message);
     }
 
-    // Local deterministic fallback
+    // Local deterministic fallback & enrichment
+    const evidenceAssessment = assessReportEvidence({
+      attachments: attachmentList,
+      category,
+      reportText: text
+    });
+
     const matchedCluster = civicClusters.find(c => 
       c.category.toLowerCase() === category.toLowerCase() &&
       c.district.toLowerCase() === userDistrict.toLowerCase()
     );
 
     const clusterId = matchedCluster ? matchedCluster.id : `CI-${Date.now().toString().slice(-4)}`;
+
+    const fastTrigger = resolveFastTriggerAuthority({
+      category,
+      location: userLocation,
+      district: userDistrict,
+      cluster: matchedCluster || { reportsCount: 1, confirmationsCount: 1, evidenceCount: attachmentList.length, durationDays: parsedDuration, aiPriorityData: { score: 50 } }
+    });
+
+    const citizenFastResponse = {
+      acknowledgement: 'Your report has been received.',
+      clusterAssociation: matchedCluster
+        ? `Your report appears related to an existing civic issue in your area (Cluster ${matchedCluster.id} in ${matchedCluster.location}).`
+        : `A new civic issue cluster (${clusterId}) has been initiated for your area.`,
+      officialStatus: matchedCluster?.officialResponse
+        ? `Official response received: ${matchedCluster.officialResponse}`
+        : 'No official response received yet.',
+      evidenceAssessment,
+      fastTrigger
+    };
 
     const newReport = {
       id: reportId,
@@ -555,7 +637,10 @@ export function RavenProvider({ children }) {
       hasPhoto: Boolean(imageAttachment),
       photoUrl: imageAttachment?.previewUrl || null,
       durationDays: parsedDuration,
-      status: 'Citizen-Reported'
+      status: 'Citizen-Reported',
+      evidenceAssessment,
+      fastTrigger,
+      citizenFastResponse
     };
 
     setCivicReports(prev => [newReport, ...prev]);
@@ -578,6 +663,7 @@ export function RavenProvider({ children }) {
             reportsCount: newReportCount,
             evidenceCount: newEvidenceCount,
             aiPriorityData: newAiScore,
+            fastTrigger,
             lastReportedDate: new Date().toISOString().split('T')[0]
           };
         }
@@ -596,8 +682,8 @@ export function RavenProvider({ children }) {
         id: clusterId,
         title: `${category} Issue — ${userLocation}`,
         category,
-        department: 'Local Municipal Corporation',
-        officialChannelKey: 'roads',
+        department: fastTrigger.department,
+        officialChannelKey: fastTrigger.officialChannel.key,
         location: userLocation,
         district: userDistrict,
         coordinates: [13.0827, 80.2707],
@@ -609,6 +695,7 @@ export function RavenProvider({ children }) {
         durationDays: parsedDuration,
         publicSupportScore: 10,
         aiPriorityData: initialAiScore,
+        fastTrigger,
         status: 'Monitoring',
         firstReportedDate: new Date().toISOString().split('T')[0],
         lastReportedDate: new Date().toISOString().split('T')[0],
@@ -616,9 +703,9 @@ export function RavenProvider({ children }) {
         aiSummary: `Citizen report regarding ${category.toLowerCase()} in ${userLocation}. Platform is monitoring for additional confirmations.`,
         commonKeywords: [category.toLowerCase(), 'citizen report'],
         relevantOfficialChannels: {
-          portal: 'https://gccservices.chennaicorporation.gov.in/pgr',
-          helpline: '1913',
-          email: 'grievances@chennaicorporation.gov.in'
+          portal: fastTrigger.officialChannel.portal,
+          helpline: fastTrigger.officialChannel.helpline,
+          email: fastTrigger.officialChannel.email
         },
         grievanceStatus: 'Under Monitoring',
         officialResponse: null
@@ -686,11 +773,52 @@ export function RavenProvider({ children }) {
     }
   };
 
-  // Admin features
-  const updateClusterStatus = (clusterId, newStatus) => {
+  // Admin features — status update with persistent backend sync & role check
+  const updateClusterStatus = async (clusterId, newStatus) => {
+    if (profile.role !== 'Admin') {
+      console.warn('Unauthorized: Only Admin users can update official issue status');
+      return;
+    }
+
+    // Optimistic update
     setCivicClusters(prev => prev.map(c => 
       c.id === clusterId ? { ...c, status: newStatus } : c
     ));
+
+    try {
+      const updated = await api.updateClusterStatus(clusterId, newStatus, profile.role);
+      if (updated) {
+        setCivicClusters(prev => prev.map(c => 
+          c.id === clusterId ? { ...c, ...updated } : c
+        ));
+        return updated;
+      }
+    } catch (err) {
+      console.error('Failed to persist cluster status update to DB:', err);
+    }
+  };
+
+  const updateReportStatus = async (reportId, newStatus) => {
+    if (profile.role !== 'Admin') {
+      console.warn('Unauthorized: Only Admin users can update report status');
+      return;
+    }
+
+    setCivicReports(prev => prev.map(r => 
+      r.id === reportId ? { ...r, status: newStatus } : r
+    ));
+
+    try {
+      const updated = await api.updateReportStatus(reportId, newStatus, profile.role);
+      if (updated) {
+        setCivicReports(prev => prev.map(r => 
+          r.id === reportId ? { ...r, ...updated } : r
+        ));
+        return updated;
+      }
+    } catch (err) {
+      console.error('Failed to persist report status update to DB:', err);
+    }
   };
 
   const addOfficialResponse = (clusterId, responseText) => {
@@ -782,6 +910,7 @@ export function RavenProvider({ children }) {
         supportCivicIssue,
         submitConfirmation,
         updateClusterStatus,
+        updateReportStatus,
         addOfficialResponse,
         markGrievanceSubmitted,
         resetDemoData,
@@ -792,6 +921,9 @@ export function RavenProvider({ children }) {
         setTheme,
         toggleTheme,
         t,
+        officialSession,
+        loginOfficial,
+        logoutOfficial,
       }}
     >
       {children}

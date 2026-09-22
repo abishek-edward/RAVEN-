@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 
 export default function ProfilePage() {
-  const { profile, switchRole, resetDemoData, navigateTo, t } = useRaven();
+  const { profile, switchRole, resetDemoData, navigateTo, t, officialSession } = useRaven();
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [resetSuccess, setResetSuccess] = useState(false);
 
@@ -217,6 +217,37 @@ export default function ProfilePage() {
           )}
         </div>
       </div>
+
+      {/* Government Official Console Access (Admin Only) */}
+      {isAdmin && (
+        <div className="bg-white dark:bg-slate-800 border border-teal-200 dark:border-teal-800/60 rounded-xl p-6 shadow-sm space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-700">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-teal-600 text-white flex items-center justify-center font-bold text-xs">
+                GO
+              </div>
+              <div>
+                <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+                  Government Official Console
+                </h2>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  Restricted console with server-side SQL-enforced ward filtering.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => navigateTo('official-portal')}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold shadow-sm transition"
+            >
+              <span>{officialSession ? `Open Console (${officialSession.username})` : 'Access Official Portal'}</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+          <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+            Demo prototype accounts seeded for Perambur, Anna Nagar, Velachery, and T. Nagar. The dashboard enforces SQL jurisdiction filtering without removing existing Citizen or Admin roles.
+          </p>
+        </div>
+      )}
 
       {/* Feedback & System Maintenance */}
       <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6 shadow-sm space-y-4">
