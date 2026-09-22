@@ -1,4 +1,5 @@
 import React from 'react';
+import { useRaven } from '../../context/RavenContext';
 import TrustBadge from '../common/TrustBadge';
 import ScoresDisplay from './ScoresDisplay';
 import { 
@@ -9,16 +10,18 @@ import {
 } from 'lucide-react';
 
 export default function CivicIssueCard({ cluster, onSelect }) {
+  const { t } = useRaven();
+
   return (
-    <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-6 shadow-sm hover:shadow-md transition flex flex-col justify-between">
       <div>
         {/* Top Header: Category, ID, Trust Badge */}
         <div className="flex items-start justify-between gap-2 mb-3">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-900 text-white">
+            <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-900 dark:bg-slate-700 text-white">
               {cluster.id}
             </span>
-            <span className="text-xs font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+            <span className="text-xs font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700/80 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-600">
               {cluster.category}
             </span>
           </div>
@@ -26,15 +29,15 @@ export default function CivicIssueCard({ cluster, onSelect }) {
         </div>
 
         {/* Title */}
-        <h3 className="text-base font-bold text-slate-900 hover:text-blue-700 transition">
+        <h3 className="text-base font-bold text-slate-900 dark:text-white hover:text-blue-700 dark:hover:text-blue-400 transition">
           {cluster.title}
         </h3>
 
         {/* Location & Department */}
-        <div className="mt-2.5 space-y-1 text-xs text-slate-500">
+        <div className="mt-2.5 space-y-1 text-xs text-slate-500 dark:text-slate-400">
           <div className="flex items-center gap-1.5">
             <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-            <span className="font-medium text-slate-700">{cluster.location}</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">{cluster.location}</span>
           </div>
           <div className="flex items-start gap-1.5">
             <Building2 className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
@@ -43,42 +46,42 @@ export default function CivicIssueCard({ cluster, onSelect }) {
         </div>
 
         {/* Platform AI Synthesis preview */}
-        <p className="mt-3 text-xs text-slate-600 leading-relaxed line-clamp-2 bg-slate-50 p-2.5 rounded border border-slate-100">
+        <p className="mt-3 text-xs text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-2 bg-slate-50 dark:bg-slate-900/60 p-2.5 rounded border border-slate-100 dark:border-slate-700">
           {cluster.aiSummary}
         </p>
 
         {/* Key Cluster Metrics Grid */}
-        <div className="mt-4 pt-3 border-t border-slate-100 grid grid-cols-3 gap-2 text-center text-xs">
-          <div className="bg-slate-50 p-2 rounded">
-            <div className="text-slate-400 text-[10px] uppercase font-semibold">Reports</div>
-            <div className="font-bold text-slate-900 text-sm mt-0.5">{cluster.reportsCount}</div>
+        <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700 grid grid-cols-3 gap-2 text-center text-xs">
+          <div className="bg-slate-50 dark:bg-slate-900/60 p-2 rounded border border-slate-100 dark:border-slate-700">
+            <div className="text-slate-400 text-[10px] uppercase font-semibold">{t('citizenReportsLabel')}</div>
+            <div className="font-bold text-slate-900 dark:text-white text-sm mt-0.5">{cluster.reportsCount}</div>
           </div>
-          <div className="bg-slate-50 p-2 rounded">
-            <div className="text-slate-400 text-[10px] uppercase font-semibold">Confirmations</div>
-            <div className="font-bold text-slate-900 text-sm mt-0.5">{cluster.confirmationsCount}</div>
+          <div className="bg-slate-50 dark:bg-slate-900/60 p-2 rounded border border-slate-100 dark:border-slate-700">
+            <div className="text-slate-400 text-[10px] uppercase font-semibold">{t('confirmationsCountLabel')}</div>
+            <div className="font-bold text-slate-900 dark:text-white text-sm mt-0.5">{cluster.confirmationsCount}</div>
           </div>
-          <div className="bg-slate-50 p-2 rounded">
+          <div className="bg-slate-50 dark:bg-slate-900/60 p-2 rounded border border-slate-100 dark:border-slate-700">
             <div className="text-slate-400 text-[10px] uppercase font-semibold flex items-center justify-center gap-1">
-              <Camera className="w-3 h-3 text-teal-700" />
-              <span>Evidence</span>
+              <Camera className="w-3 h-3 text-teal-700 dark:text-teal-400" />
+              <span>{t('evidenceCountLabel')}</span>
             </div>
-            <div className="font-bold text-slate-900 text-sm mt-0.5">{cluster.evidenceCount}</div>
+            <div className="font-bold text-slate-900 dark:text-white text-sm mt-0.5">{cluster.evidenceCount}</div>
           </div>
         </div>
 
         {/* Dual Scores preview */}
-        <div className="mt-4 pt-3 border-t border-slate-100">
+        <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700">
           <ScoresDisplay cluster={cluster} compact={true} />
         </div>
       </div>
 
       {/* Action button */}
-      <div className="mt-5 pt-3 border-t border-slate-100">
+      <div className="mt-5 pt-3 border-t border-slate-100 dark:border-slate-700">
         <button
           onClick={() => onSelect(cluster.id)}
-          className="w-full inline-flex items-center justify-center gap-1.5 text-xs font-semibold py-2 px-3 rounded bg-slate-900 hover:bg-slate-800 text-white transition"
+          className="w-full inline-flex items-center justify-center gap-1.5 text-xs font-semibold py-2 px-3 rounded bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-500 text-white transition"
         >
-          <span>View Clustered Evidence & Confirm</span>
+          <span>{t('viewClusteredEvidenceBtn')}</span>
           <ArrowRight className="w-3.5 h-3.5" />
         </button>
       </div>

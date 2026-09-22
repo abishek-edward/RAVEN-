@@ -12,7 +12,7 @@ import AdminPage from './pages/AdminPage';
 import TrustBadge from './components/common/TrustBadge';
 
 function MainContent() {
-  const { currentPage, navigateTo, resetDemoData } = useRaven();
+  const { currentPage, navigateTo, resetDemoData, t } = useRaven();
 
   const renderPage = () => {
     switch (currentPage) {
@@ -38,24 +38,24 @@ function MainContent() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 font-sans">
+    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 font-sans transition-colors duration-200">
       <Header />
       <main className="flex-1">
         {renderPage()}
       </main>
 
       {/* Clean Professional Civic Tech Footer */}
-      <footer className="bg-white border-t border-slate-200 mt-16 py-8 text-xs text-slate-500">
+      <footer className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 mt-16 py-8 text-xs text-slate-500 dark:text-slate-400 transition-colors duration-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <div className="flex items-center gap-2 font-bold text-slate-900 text-sm">
+              <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-slate-100 text-sm">
                 <span className="w-5 h-5 rounded bg-teal-600 text-white flex items-center justify-center text-xs">R</span>
                 RAVEN
-                <span className="text-slate-400 font-normal">| Government Promises. Citizen Reality.</span>
+                <span className="text-slate-400 dark:text-slate-500 font-normal">| {t('tagline')}</span>
               </div>
-              <p className="mt-1 text-[11px] text-slate-500 max-w-xl leading-relaxed">
-                An independent civic intelligence initiative designed to verify public policy commitments through citizen ground corroboration and correlate everyday municipal issues.
+              <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 max-w-xl leading-relaxed">
+                {t('subtitle')}
               </p>
             </div>
 
@@ -66,48 +66,48 @@ function MainContent() {
             </div>
           </div>
 
-          <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-[11px]">
-            <div className="flex items-center gap-4 text-slate-600">
+          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-[11px]">
+            <div className="flex items-center gap-4 text-slate-600 dark:text-slate-400">
               <button
                 onClick={() => navigateTo('landing')}
-                className="hover:text-slate-900 transition"
+                className="hover:text-slate-900 dark:hover:text-slate-100 transition"
               >
-                Home
+                {t('navHome')}
               </button>
               <button
                 onClick={() => navigateTo('schemes')}
-                className="hover:text-slate-900 transition"
+                className="hover:text-slate-900 dark:hover:text-slate-100 transition"
               >
-                Commitments & Schemes
+                {t('navSchemes')}
               </button>
               <button
                 onClick={() => navigateTo('civic-issues')}
-                className="hover:text-slate-900 transition"
+                className="hover:text-slate-900 dark:hover:text-slate-100 transition"
               >
-                Civic Issues
+                {t('navCivicIssues')}
               </button>
               <button
                 onClick={() => navigateTo('civic-map')}
-                className="hover:text-slate-900 transition"
+                className="hover:text-slate-900 dark:hover:text-slate-100 transition"
               >
-                Civic Map
+                {t('navCivicMap')}
               </button>
               <button
                 onClick={() => navigateTo('profile')}
-                className="hover:text-slate-900 transition font-medium"
+                className="hover:text-slate-900 dark:hover:text-slate-100 transition font-medium"
               >
-                Profile / Feedback
+                {t('navProfile')}
               </button>
             </div>
 
             <div className="flex items-center gap-3">
-              <span className="text-slate-400">Privacy: All public citizen reports are strictly anonymous</span>
+              <span className="text-slate-400 dark:text-slate-500">{t('privacyNote')}</span>
               <button
                 onClick={resetDemoData}
-                className="text-amber-700 hover:text-amber-900 font-semibold"
-                title="Reset all datasets to initial state"
+                className="text-amber-700 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-300 font-semibold transition"
+                title={t('resetPlatformData')}
               >
-                Reset Platform Data
+                {t('resetPlatformData')}
               </button>
             </div>
           </div>

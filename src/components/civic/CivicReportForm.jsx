@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 
 export default function CivicReportForm({ onReportSubmitted }) {
-  const { addCivicReport, profile } = useRaven();
+  const { addCivicReport, profile, t } = useRaven();
 
   const [text, setText] = useState('');
   const [category, setCategory] = useState('Street Infrastructure');
@@ -68,32 +68,30 @@ export default function CivicReportForm({ onReportSubmitted }) {
   };
 
   return (
-    <div className="bg-white border-2 border-blue-600/30 rounded-lg p-6 shadow-sm">
-      <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+    <div className="bg-white dark:bg-slate-800 border-2 border-blue-600/30 dark:border-blue-500/40 rounded-lg p-6 shadow-sm">
+      <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700">
         <div className="flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 text-blue-700" />
-          <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide">
-            Report an Everyday Civic Issue
+          <AlertCircle className="w-4 h-4 text-blue-700 dark:text-blue-400" />
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wide">
+            {t('reportCivicHeader')}
           </h3>
         </div>
         <TrustBadge type="CITIZEN" size="xs" />
       </div>
 
-      <p className="mt-2 text-xs text-slate-500 leading-relaxed">
-        Report neighborhood municipal and infrastructure problems (streetlights, potholes, waste, drainage, water). 
-        Input supports Tamil, English, or Mixed Tamil-English.
+      <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+        {t('reportCivicDesc')}
       </p>
 
       {/* Strict Anonymous Privacy Notice */}
-      <div className="mt-3 p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 text-slate-700">
-          <ShieldCheck className="w-4 h-4 text-teal-700 shrink-0" />
+      <div className="mt-3 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-lg border border-slate-200 dark:border-slate-700 text-xs flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+          <ShieldCheck className="w-4 h-4 text-teal-700 dark:text-teal-400 shrink-0" />
           <div>
-            <span className="font-semibold text-slate-900">Your identity is kept private.</span>
-            <span className="text-slate-500 ml-1">Anonymous to the public.</span>
+            <span className="font-semibold text-slate-900 dark:text-white">{t('anonymousNotice')}</span>
           </div>
         </div>
-        <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-white text-slate-600 border border-slate-200">
+        <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
           Private Submission
         </span>
       </div>
@@ -101,20 +99,20 @@ export default function CivicReportForm({ onReportSubmitted }) {
       {/* Success Notification + Feedback Loop */}
       {submittedReport && (
         <div className="mt-4 space-y-4">
-          <div className="p-4 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs">
+          <div className="p-4 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 text-xs">
             <div className="flex items-start gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
               <div>
-                <div className="font-semibold text-emerald-950">
+                <div className="font-semibold text-emerald-950 dark:text-emerald-100">
                   Civic report recorded ({submittedReport.id})
                 </div>
-                <div className="mt-1 text-emerald-800">
+                <div className="mt-1 text-emerald-800 dark:text-emerald-300">
                   Your report has been assigned to cluster <strong>{submittedReport.clusterId}</strong> as <strong>Anonymous Citizen</strong>. The platform has updated the deterministic AI-Assisted Priority Score for this collective issue.
                 </div>
                 <button
                   type="button"
                   onClick={() => setSubmittedReport(null)}
-                  className="mt-2 text-[11px] font-semibold text-emerald-900 underline block"
+                  className="mt-2 text-[11px] font-semibold text-emerald-900 dark:text-emerald-300 underline block"
                 >
                   Submit another civic issue
                 </button>
@@ -133,7 +131,7 @@ export default function CivicReportForm({ onReportSubmitted }) {
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           {/* Quick Click Samples */}
           <div>
-            <div className="text-[11px] font-medium text-slate-500 mb-1 flex items-center gap-1">
+            <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1">
               <Sparkles className="w-3 h-3 text-amber-500" />
               <span>Sample inputs (Click to load):</span>
             </div>
@@ -143,7 +141,7 @@ export default function CivicReportForm({ onReportSubmitted }) {
                   key={idx}
                   type="button"
                   onClick={() => setText(sample)}
-                  className="text-[11px] px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-left transition"
+                  className="text-[11px] px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 text-left transition"
                 >
                   "{sample}"
                 </button>
@@ -154,12 +152,12 @@ export default function CivicReportForm({ onReportSubmitted }) {
           {/* Description with Language Classification and Voice-to-Text */}
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label htmlFor="issueText" className="block text-xs font-semibold text-slate-800">
-                Issue Description <span className="text-red-500">*</span>
+              <label htmlFor="issueText" className="block text-xs font-semibold text-slate-800 dark:text-slate-200">
+                {t('describeIssueLabel')} <span className="text-red-500">*</span>
               </label>
-              <div className="flex items-center gap-1 text-[11px] text-slate-500">
+              <div className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
                 <span>Detected Language:</span>
-                <span className="font-semibold text-slate-800 px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200">
+                <span className="font-semibold text-slate-800 dark:text-slate-200 px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600">
                   {detectedLanguage}
                 </span>
               </div>
@@ -172,7 +170,7 @@ export default function CivicReportForm({ onReportSubmitted }) {
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="Describe the issue in Tamil, English, or Tanglish (e.g. Street light இரண்டு வாரமா work ஆகல...)"
-              className="w-full text-xs p-3 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-700 focus:border-blue-700 font-sans"
+              className="w-full text-xs p-3 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-400 focus:ring-2 focus:ring-blue-700 focus:border-blue-700 font-sans"
             />
 
             {/* Voice-to-Text */}
@@ -187,14 +185,14 @@ export default function CivicReportForm({ onReportSubmitted }) {
           {/* Category & District */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label htmlFor="civicCategory" className="block text-xs font-semibold text-slate-800 mb-1">
-                Civic Category
+              <label htmlFor="civicCategory" className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
+                {t('issueCategoryLabel')}
               </label>
               <select
                 id="civicCategory"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full text-xs p-2.5 border border-slate-300 rounded-md bg-white font-medium text-slate-800 focus:ring-2 focus:ring-blue-700"
+                className="w-full text-xs p-2.5 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 font-medium text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-blue-700"
               >
                 <option value="Street Infrastructure">Street Infrastructure (Streetlights, Signs)</option>
                 <option value="Roads">Roads & Potholes</option>
@@ -207,14 +205,14 @@ export default function CivicReportForm({ onReportSubmitted }) {
             </div>
 
             <div>
-              <label htmlFor="district" className="block text-xs font-semibold text-slate-800 mb-1">
-                District / Administrative Region
+              <label htmlFor="district" className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
+                {t('districtLabel')}
               </label>
               <select
                 id="district"
                 value={district}
                 onChange={(e) => setDistrict(e.target.value)}
-                className="w-full text-xs p-2.5 border border-slate-300 rounded-md bg-white font-medium text-slate-800 focus:ring-2 focus:ring-blue-700"
+                className="w-full text-xs p-2.5 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 font-medium text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-blue-700"
               >
                 <option value="Chennai">Chennai</option>
                 <option value="Madurai">Madurai</option>
@@ -229,9 +227,9 @@ export default function CivicReportForm({ onReportSubmitted }) {
           {/* Specific Location & Duration */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label htmlFor="location" className="block text-xs font-medium text-slate-700 mb-1 flex items-center gap-1">
-                <MapPin className="w-3 h-3 text-slate-500" />
-                Specific Street / Ward / Landmark
+              <label htmlFor="location" className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1">
+                <MapPin className="w-3 h-3 text-slate-500 dark:text-slate-400" />
+                {t('locationAddressLabel')}
               </label>
               <input
                 id="location"
@@ -239,14 +237,14 @@ export default function CivicReportForm({ onReportSubmitted }) {
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="e.g. 3rd Cross Street near school"
-                className="w-full text-xs p-2.5 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-700"
+                className="w-full text-xs p-2.5 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-700"
               />
             </div>
 
             <div>
-              <label htmlFor="durationDays" className="block text-xs font-medium text-slate-700 mb-1 flex items-center gap-1">
-                <Clock className="w-3 h-3 text-slate-500" />
-                Issue Duration (Days observed)
+              <label htmlFor="durationDays" className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1">
+                <Clock className="w-3 h-3 text-slate-500 dark:text-slate-400" />
+                {t('durationUnaddressedLabel')}
               </label>
               <input
                 id="durationDays"
@@ -255,7 +253,7 @@ export default function CivicReportForm({ onReportSubmitted }) {
                 max="365"
                 value={durationDays}
                 onChange={(e) => setDurationDays(e.target.value)}
-                className="w-full text-xs p-2.5 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-700"
+                className="w-full text-xs p-2.5 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-700"
               />
             </div>
           </div>
@@ -272,10 +270,10 @@ export default function CivicReportForm({ onReportSubmitted }) {
           <button
             type="submit"
             disabled={isSubmitting || !text.trim()}
-            className="inline-flex items-center justify-center gap-1.5 w-full py-2.5 px-4 rounded bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 text-white text-xs font-semibold shadow-sm transition"
+            className="inline-flex items-center justify-center gap-1.5 w-full py-2.5 px-4 rounded bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-500 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white text-xs font-semibold shadow-sm transition"
           >
             <Send className="w-3.5 h-3.5" />
-            <span>Submit Everyday Civic Issue Report</span>
+            <span>{isSubmitting ? t('submittingBtn') : t('submitCivicReportBtn')}</span>
           </button>
         </form>
       )}

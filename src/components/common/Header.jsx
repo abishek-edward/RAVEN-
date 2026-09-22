@@ -8,11 +8,22 @@ import {
   User, 
   ShieldAlert,
   Menu,
-  X
+  X,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 export default function Header() {
-  const { currentPage, navigateTo, profile } = useRaven();
+  const { 
+    currentPage, 
+    navigateTo, 
+    profile, 
+    language, 
+    setLanguage, 
+    theme, 
+    toggleTheme, 
+    t 
+  } = useRaven();
   const isAdmin = profile.role === 'Admin';
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
@@ -22,7 +33,7 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-slate-900 text-slate-100 border-b border-slate-800 shadow-sm">
+    <header className="sticky top-0 z-40 bg-slate-900 text-slate-100 border-b border-slate-800 shadow-sm transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* LEFT: RAVEN Logo + Small Tagline */}
@@ -38,7 +49,7 @@ export default function Header() {
                 RAVEN
               </div>
               <div className="text-[11px] text-slate-400 font-normal">
-                Government Promises. Citizen Reality.
+                {t('tagline')}
               </div>
             </div>
           </button>
@@ -53,7 +64,7 @@ export default function Header() {
                   : 'text-slate-300 hover:bg-slate-800/60 hover:text-white'
               }`}
             >
-              Home
+              {t('navHome')}
             </button>
 
             <button
@@ -65,7 +76,7 @@ export default function Header() {
               }`}
             >
               <Building2 className="w-3.5 h-3.5 text-teal-400" />
-              <span>Commitments & Schemes</span>
+              <span>{t('navSchemes')}</span>
             </button>
 
             <button
@@ -77,7 +88,7 @@ export default function Header() {
               }`}
             >
               <AlertCircle className="w-3.5 h-3.5 text-blue-400" />
-              <span>Civic Issues</span>
+              <span>{t('navCivicIssues')}</span>
             </button>
 
             <button
@@ -89,7 +100,7 @@ export default function Header() {
               }`}
             >
               <MapIcon className="w-3.5 h-3.5 text-amber-400" />
-              <span>Civic Map</span>
+              <span>{t('navCivicMap')}</span>
             </button>
 
             <button
@@ -101,7 +112,7 @@ export default function Header() {
               }`}
             >
               <FileText className="w-3.5 h-3.5 text-purple-400" />
-              <span>My Reports</span>
+              <span>{t('navMyReports')}</span>
             </button>
 
             {/* Admin link (conditional) */}
@@ -115,31 +126,126 @@ export default function Header() {
                 }`}
               >
                 <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
-                <span>Admin / Escalation</span>
+                <span>{t('navAdmin')}</span>
               </button>
             )}
 
-            {/* RIGHT: Profile / Login */}
+            {/* Profile Button */}
             <button
               onClick={() => handleNav('profile')}
-              className={`ml-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs font-semibold transition ${
+              className={`ml-1.5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs font-semibold transition ${
                 currentPage === 'profile'
                   ? 'bg-teal-700 text-white border-teal-500'
                   : 'bg-slate-800/80 hover:bg-slate-800 text-slate-200 border-slate-700'
               }`}
             >
               <User className="w-3.5 h-3.5 text-teal-400" />
-              <span>{profile.role === 'Admin' ? 'Admin Profile' : 'Profile / Login'}</span>
+              <span>{profile.role === 'Admin' ? t('navProfileAdmin') : t('navProfile')}</span>
               <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono ${
                 profile.role === 'Admin' ? 'bg-amber-900/60 text-amber-300' : 'bg-slate-700 text-slate-300'
               }`}>
                 {profile.role}
               </span>
             </button>
+
+            {/* Language Toggle: EN | தமிழ் */}
+            <div 
+              className="ml-2 flex items-center rounded-md border border-slate-700 bg-slate-800/90 p-0.5"
+              role="group"
+              aria-label="Language selection"
+            >
+              <button
+                type="button"
+                onClick={() => setLanguage('en')}
+                aria-label={t('switchToEnglish')}
+                aria-pressed={language === 'en'}
+                className={`px-2 py-1 rounded text-xs font-medium transition ${
+                  language === 'en'
+                    ? 'bg-teal-600 text-white font-semibold shadow-sm'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-700/60'
+                }`}
+              >
+                EN
+              </button>
+              <button
+                type="button"
+                onClick={() => setLanguage('ta')}
+                aria-label={t('switchToTamil')}
+                aria-pressed={language === 'ta'}
+                className={`px-2 py-1 rounded text-xs font-medium transition ${
+                  language === 'ta'
+                    ? 'bg-teal-600 text-white font-semibold shadow-sm'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-700/60'
+                }`}
+              >
+                தமிழ்
+              </button>
+            </div>
+
+            {/* Theme Toggle: ☀️ / 🌙 */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label={theme === 'dark' ? t('switchToLight') : t('switchToDark')}
+              title={theme === 'dark' ? t('switchToLight') : t('switchToDark')}
+              className="ml-1.5 p-1.5 rounded-md border border-slate-700 bg-slate-800/90 text-slate-200 hover:bg-slate-800 hover:text-white transition flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-teal-500"
+            >
+              {theme === 'dark' ? (
+                <Sun className="w-4 h-4 text-amber-400" />
+              ) : (
+                <Moon className="w-4 h-4 text-slate-300" />
+              )}
+            </button>
           </nav>
 
-          {/* Mobile hamburger button */}
+          {/* Mobile top controls */}
           <div className="flex md:hidden items-center gap-2">
+            {/* Mobile Language Toggle */}
+            <div 
+              className="flex items-center rounded-md border border-slate-700 bg-slate-800 p-0.5"
+              role="group"
+              aria-label="Language selection"
+            >
+              <button
+                type="button"
+                onClick={() => setLanguage('en')}
+                aria-label={t('switchToEnglish')}
+                aria-pressed={language === 'en'}
+                className={`px-1.5 py-0.5 rounded text-[11px] font-medium transition ${
+                  language === 'en' ? 'bg-teal-600 text-white font-bold' : 'text-slate-300'
+                }`}
+              >
+                EN
+              </button>
+              <button
+                type="button"
+                onClick={() => setLanguage('ta')}
+                aria-label={t('switchToTamil')}
+                aria-pressed={language === 'ta'}
+                className={`px-1.5 py-0.5 rounded text-[11px] font-medium transition ${
+                  language === 'ta' ? 'bg-teal-600 text-white font-bold' : 'text-slate-300'
+                }`}
+              >
+                தமிழ்
+              </button>
+            </div>
+
+            {/* Mobile Theme Toggle */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label={theme === 'dark' ? t('switchToLight') : t('switchToDark')}
+              title={theme === 'dark' ? t('switchToLight') : t('switchToDark')}
+              className="p-1.5 rounded bg-slate-800 text-slate-200 border border-slate-700 hover:bg-slate-700 transition"
+            >
+              {theme === 'dark' ? (
+                <Sun className="w-4 h-4 text-amber-400" />
+              ) : (
+                <Moon className="w-4 h-4 text-slate-300" />
+              )}
+            </button>
+
+            {/* Mobile Role badge */}
             <button
               onClick={() => handleNav('profile')}
               className="px-2 py-1 rounded bg-slate-800 text-xs font-medium text-slate-300 border border-slate-700"
@@ -147,6 +253,7 @@ export default function Header() {
               {profile.role}
             </button>
 
+            {/* Hamburger Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-1.5 text-slate-300 hover:text-white rounded hover:bg-slate-800"
@@ -164,45 +271,45 @@ export default function Header() {
               onClick={() => handleNav('landing')}
               className={`w-full text-left px-3 py-2 rounded ${currentPage === 'landing' ? 'bg-slate-800 text-white font-semibold' : 'text-slate-300'}`}
             >
-              Home
+              {t('navHome')}
             </button>
             <button
               onClick={() => handleNav('schemes')}
               className={`w-full text-left px-3 py-2 rounded ${currentPage === 'schemes' ? 'bg-slate-800 text-teal-300 font-semibold' : 'text-slate-300'}`}
             >
-              Commitments & Schemes
+              {t('navSchemes')}
             </button>
             <button
               onClick={() => handleNav('civic-issues')}
               className={`w-full text-left px-3 py-2 rounded ${currentPage === 'civic-issues' ? 'bg-slate-800 text-blue-300 font-semibold' : 'text-slate-300'}`}
             >
-              Civic Issues
+              {t('navCivicIssues')}
             </button>
             <button
               onClick={() => handleNav('civic-map')}
               className={`w-full text-left px-3 py-2 rounded ${currentPage === 'civic-map' ? 'bg-slate-800 text-white font-semibold' : 'text-slate-300'}`}
             >
-              Civic Map
+              {t('navCivicMap')}
             </button>
             <button
               onClick={() => handleNav('my-reports')}
               className={`w-full text-left px-3 py-2 rounded ${currentPage === 'my-reports' ? 'bg-slate-800 text-white font-semibold' : 'text-slate-300'}`}
             >
-              My Reports
+              {t('navMyReports')}
             </button>
             {isAdmin && (
               <button
                 onClick={() => handleNav('admin')}
                 className={`w-full text-left px-3 py-2 rounded text-amber-400 font-semibold ${currentPage === 'admin' ? 'bg-amber-950/80' : ''}`}
               >
-                Admin / Escalation
+                {t('navAdmin')}
               </button>
             )}
             <button
               onClick={() => handleNav('profile')}
               className={`w-full text-left px-3 py-2 rounded ${currentPage === 'profile' ? 'bg-slate-800 text-white font-semibold' : 'text-slate-300'}`}
             >
-              Profile / Role Switcher ({profile.role})
+              {t('navProfile')} ({profile.role})
             </button>
           </div>
         )}
@@ -210,3 +317,4 @@ export default function Header() {
     </header>
   );
 }
+

@@ -6,6 +6,7 @@ import { INITIAL_CIVIC_REPORTS, INITIAL_CIVIC_CLUSTERS } from '../data/initialCi
 import { INITIAL_CONFIRMATIONS } from '../data/initialConfirmations';
 import { calculateAIAssistedPriorityScore } from '../utils/priorityCalculator';
 import { detectLanguage } from '../utils/languageDetector';
+import { TRANSLATIONS } from '../constants/translations';
 
 const RavenContext = createContext(null);
 
@@ -165,6 +166,37 @@ export function RavenProvider({ children }) {
     return saved ? JSON.parse(saved) : [];
   });
 
+  // 11. Multilingual language preference ('en' | 'ta')
+  const [language, setLanguage] = useState(() => {
+    const saved = localStorage.getItem('raven-language');
+    return saved === 'ta' ? 'ta' : 'en';
+  });
+
+  const toggleLanguage = () => {
+    setLanguage((prev) => (prev === 'en' ? 'ta' : 'en'));
+  };
+
+  // 12. Theme preference ('light' | 'dark')
+  const [theme, setTheme] = useState(() => {
+    const saved = localStorage.getItem('raven-theme');
+    return saved === 'dark' ? 'dark' : 'light';
+  });
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+  };
+
+  // Translation lookup helper
+  const t = (key, replacements = {}) => {
+    let text = TRANSLATIONS[language]?.[key] ?? TRANSLATIONS.en?.[key] ?? key;
+    if (typeof text === 'string' && replacements) {
+      Object.entries(replacements).forEach(([k, v]) => {
+        text = text.replace(new RegExp(`\\{${k}\\}`, 'g'), v);
+      });
+    }
+    return text;
+  };
+
   // Auto-open complaint form state for direct triggers
   const [autoOpenSchemeForm, setAutoOpenSchemeForm] = useState(false);
 
@@ -292,6 +324,19 @@ export function RavenProvider({ children }) {
   useEffect(() => {
     localStorage.setItem('raven_feedbacks', JSON.stringify(feedbacks));
   }, [feedbacks]);
+
+  useEffect(() => {
+    localStorage.setItem('raven-language', language);
+  }, [language]);
+
+  useEffect(() => {
+    localStorage.setItem('raven-theme', theme);
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [theme]);
 
   // Navigate helper
   const navigateTo = (page, param = null) => {
@@ -740,6 +785,13 @@ export function RavenProvider({ children }) {
         addOfficialResponse,
         markGrievanceSubmitted,
         resetDemoData,
+        language,
+        setLanguage,
+        toggleLanguage,
+        theme,
+        setTheme,
+        toggleTheme,
+        t,
       }}
     >
       {children}

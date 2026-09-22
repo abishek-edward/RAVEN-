@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 
 export default function ProfilePage() {
-  const { profile, switchRole, resetDemoData, navigateTo } = useRaven();
+  const { profile, switchRole, resetDemoData, navigateTo, t } = useRaven();
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [resetSuccess, setResetSuccess] = useState(false);
 
@@ -35,30 +35,30 @@ export default function ProfilePage() {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Page Header */}
       <div>
-        <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-          <span>Authentication & Session Settings</span>
+        <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+          <span>{t('authSettingsTitle')}</span>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mt-1">
-          RAVEN Profile & Role Selector
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white mt-1">
+          {t('profilePageTitle')}
         </h1>
-        <p className="text-xs text-slate-600 mt-1">
-          Civic Intelligence Platform — Role-Based Access Control
+        <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
+          {t('profilePageSubtitle')}
         </p>
       </div>
 
       {/* Role Selector Card */}
-      <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm space-y-5">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+      <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6 shadow-sm space-y-5">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700">
           <div>
-            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">
-              Active Role
+            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+              {t('activeRole')}
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Switch between Citizen and Administrator roles to test interface access control.
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              {t('roleSelectorDesc')}
             </p>
           </div>
-          <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 font-semibold">
-            Active Session
+          <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600 font-semibold">
+            {t('activeSession')}
           </span>
         </div>
 
@@ -70,30 +70,30 @@ export default function ProfilePage() {
             onClick={() => handleRoleChange('Citizen')}
             className={`p-5 rounded-lg border-2 text-left transition flex flex-col justify-between space-y-3 ${
               !isAdmin
-                ? 'border-teal-600 bg-teal-50/50 shadow-sm'
-                : 'border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-slate-300'
+                ? 'border-teal-600 bg-teal-50/50 dark:bg-teal-950/40 shadow-sm'
+                : 'border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/40 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:border-slate-300 dark:hover:border-slate-600'
             }`}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${
-                  !isAdmin ? 'bg-teal-700 text-white' : 'bg-slate-200 text-slate-700'
+                  !isAdmin ? 'bg-teal-700 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
                 }`}>
                   DC
                 </div>
                 <div>
-                  <div className="font-bold text-sm text-slate-900">Citizen</div>
-                  <div className="text-[11px] text-slate-500">Role: Citizen Participant</div>
+                  <div className="font-bold text-sm text-slate-900 dark:text-white">{t('citizenRoleTitle')}</div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">{t('citizenRoleRoleDesc')}</div>
                 </div>
               </div>
-              {!isAdmin && <CheckCircle2 className="w-5 h-5 text-teal-600" />}
+              {!isAdmin && <CheckCircle2 className="w-5 h-5 text-teal-600 dark:text-teal-400" />}
             </div>
 
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Explore schemes, report ground experiences anonymously, upload real evidence, submit civic complaints, and track your submissions.
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              {t('citizenRoleExplanation')}
             </p>
 
-            <div className="text-[11px] font-semibold text-teal-800">
+            <div className="text-[11px] font-semibold text-teal-800 dark:text-teal-400">
               Identity: Citizen (Chennai)
             </div>
           </button>
@@ -104,30 +104,30 @@ export default function ProfilePage() {
             onClick={() => handleRoleChange('Admin')}
             className={`p-5 rounded-lg border-2 text-left transition flex flex-col justify-between space-y-3 ${
               isAdmin
-                ? 'border-amber-600 bg-amber-50/50 shadow-sm'
-                : 'border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-slate-300'
+                ? 'border-amber-600 bg-amber-50/50 dark:bg-amber-950/40 shadow-sm'
+                : 'border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/40 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:border-slate-300 dark:hover:border-slate-600'
             }`}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${
-                  isAdmin ? 'bg-amber-700 text-white' : 'bg-slate-200 text-slate-700'
+                  isAdmin ? 'bg-amber-700 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
                 }`}>
                   RA
                 </div>
                 <div>
-                  <div className="font-bold text-sm text-slate-900">Admin</div>
-                  <div className="text-[11px] text-slate-500">Role: Platform Administrator</div>
+                  <div className="font-bold text-sm text-slate-900 dark:text-white">{t('adminRoleTitle')}</div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">{t('adminRoleRoleDesc')}</div>
                 </div>
               </div>
-              {isAdmin && <CheckCircle2 className="w-5 h-5 text-amber-600" />}
+              {isAdmin && <CheckCircle2 className="w-5 h-5 text-amber-600 dark:text-amber-400" />}
             </div>
 
-            <p className="text-xs text-slate-600 leading-relaxed">
-              View escalation queue, monitor civic clusters, review aggregated citizen evidence, generate collective grievances, and add official responses.
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              {t('adminRoleExplanation')}
             </p>
 
-            <div className="text-[11px] font-semibold text-amber-800">
+            <div className="text-[11px] font-semibold text-amber-800 dark:text-amber-400">
               Identity: RAVEN Administrator
             </div>
           </button>
@@ -135,21 +135,21 @@ export default function ProfilePage() {
       </div>
 
       {/* Privacy Notice Card */}
-      <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm space-y-3">
+      <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6 shadow-sm space-y-3">
         <div className="flex items-center gap-2">
-          <ShieldCheck className="w-5 h-5 text-teal-700" />
-          <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wide">
-            Privacy: Your reports are anonymous to the public
+          <ShieldCheck className="w-5 h-5 text-teal-700 dark:text-teal-400" />
+          <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wide">
+            {t('sessionPrivacyGuarantee')}
           </h2>
         </div>
-        <p className="text-xs text-slate-600 leading-relaxed">
-          In all public views across RAVEN (such as scheme experience feeds, civic issue cards, collective cluster summaries, and grievance petitions), all citizen submissions are explicitly rendered as <strong>"Anonymous Citizen"</strong> with district and date only. No names, phone numbers, email addresses, or personal identifiers are ever exposed.
+        <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+          {t('sessionPrivacyExplanation')}
         </p>
       </div>
 
       {/* Role Specific Actions */}
-      <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm space-y-4">
-        <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900 pb-2 border-b border-slate-100">
+      <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6 shadow-sm space-y-4">
+        <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white pb-2 border-b border-slate-100 dark:border-slate-700">
           Available Tools for {profile.role}
         </h2>
 
@@ -158,13 +158,13 @@ export default function ProfilePage() {
             <>
               <button
                 onClick={() => navigateTo('my-reports')}
-                className="p-3.5 rounded-lg border border-slate-200 hover:border-teal-500 bg-slate-50 hover:bg-white text-left transition flex items-center justify-between"
+                className="p-3.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-teal-500 dark:hover:border-teal-400 bg-slate-50 dark:bg-slate-900/60 hover:bg-white dark:hover:bg-slate-700/60 text-left transition flex items-center justify-between"
               >
                 <div className="flex items-center gap-2.5">
-                  <FileText className="w-4 h-4 text-purple-600" />
+                  <FileText className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                   <div>
-                    <div className="font-semibold text-slate-900">My Reports</div>
-                    <div className="text-[11px] text-slate-500">View your private submissions</div>
+                    <div className="font-semibold text-slate-900 dark:text-white">{t('navMyReports')}</div>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400">View your private submissions</div>
                   </div>
                 </div>
                 <ArrowRight className="w-4 h-4 text-slate-400" />
@@ -172,13 +172,13 @@ export default function ProfilePage() {
 
               <button
                 onClick={() => navigateTo('schemes')}
-                className="p-3.5 rounded-lg border border-slate-200 hover:border-teal-500 bg-slate-50 hover:bg-white text-left transition flex items-center justify-between"
+                className="p-3.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-teal-500 dark:hover:border-teal-400 bg-slate-50 dark:bg-slate-900/60 hover:bg-white dark:hover:bg-slate-700/60 text-left transition flex items-center justify-between"
               >
                 <div className="flex items-center gap-2.5">
-                  <ShieldCheck className="w-4 h-4 text-teal-600" />
+                  <ShieldCheck className="w-4 h-4 text-teal-600 dark:text-teal-400" />
                   <div>
-                    <div className="font-semibold text-slate-900">Commitments & Schemes</div>
-                    <div className="text-[11px] text-slate-500">Report experience with public policies</div>
+                    <div className="font-semibold text-slate-900 dark:text-white">{t('navSchemes')}</div>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400">Report experience with public policies</div>
                   </div>
                 </div>
                 <ArrowRight className="w-4 h-4 text-slate-400" />
@@ -188,13 +188,13 @@ export default function ProfilePage() {
             <>
               <button
                 onClick={() => navigateTo('admin')}
-                className="p-3.5 rounded-lg border border-amber-300 hover:border-amber-500 bg-amber-50/50 hover:bg-amber-50 text-left transition flex items-center justify-between"
+                className="p-3.5 rounded-lg border border-amber-300 dark:border-amber-700 hover:border-amber-500 bg-amber-50/50 dark:bg-amber-950/40 hover:bg-amber-50 dark:hover:bg-amber-900/40 text-left transition flex items-center justify-between"
               >
                 <div className="flex items-center gap-2.5">
-                  <ShieldAlert className="w-4 h-4 text-amber-600" />
+                  <ShieldAlert className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                   <div>
-                    <div className="font-semibold text-slate-900">Admin / Escalation Console</div>
-                    <div className="text-[11px] text-slate-600">Review clusters & generate collective grievances</div>
+                    <div className="font-semibold text-slate-900 dark:text-white">{t('navAdmin')}</div>
+                    <div className="text-[11px] text-slate-600 dark:text-slate-400">Review clusters & generate collective grievances</div>
                   </div>
                 </div>
                 <ArrowRight className="w-4 h-4 text-slate-400" />
@@ -202,13 +202,13 @@ export default function ProfilePage() {
 
               <button
                 onClick={() => navigateTo('civic-issues')}
-                className="p-3.5 rounded-lg border border-slate-200 hover:border-blue-500 bg-slate-50 hover:bg-white text-left transition flex items-center justify-between"
+                className="p-3.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-blue-500 bg-slate-50 dark:bg-slate-900/60 hover:bg-white dark:hover:bg-slate-700/60 text-left transition flex items-center justify-between"
               >
                 <div className="flex items-center gap-2.5">
-                  <AlertCircle className="w-4 h-4 text-blue-600" />
+                  <AlertCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                   <div>
-                    <div className="font-semibold text-slate-900">Civic Issues</div>
-                    <div className="text-[11px] text-slate-500">Inspect municipal issue clusters</div>
+                    <div className="font-semibold text-slate-900 dark:text-white">{t('navCivicIssues')}</div>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400">Inspect municipal issue clusters</div>
                   </div>
                 </div>
                 <ArrowRight className="w-4 h-4 text-slate-400" />
@@ -219,39 +219,39 @@ export default function ProfilePage() {
       </div>
 
       {/* Feedback & System Maintenance */}
-      <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm space-y-4">
-        <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900 pb-2 border-b border-slate-100">
+      <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6 shadow-sm space-y-4">
+        <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white pb-2 border-b border-slate-100 dark:border-slate-700">
           Feedback & Maintenance
         </h2>
 
         <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={() => setShowFeedbackModal(!showFeedbackModal)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 dark:bg-teal-700 dark:hover:bg-teal-600 text-white text-xs font-semibold transition"
           >
             <MessageSquare className="w-3.5 h-3.5 text-teal-400" />
-            <span>{showFeedbackModal ? 'Hide Feedback Form' : 'Give Platform Feedback'}</span>
+            <span>{showFeedbackModal ? 'Hide Feedback Form' : t('giveFeedbackBtn')}</span>
           </button>
 
           <button
             onClick={handleReset}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold transition border border-slate-300"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 text-xs font-semibold transition border border-slate-300 dark:border-slate-600"
             title="Reset all data to default seeded state"
           >
-            <RotateCcw className="w-3.5 h-3.5 text-amber-600" />
-            <span>Reset Platform Data</span>
+            <RotateCcw className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+            <span>{t('resetPlatformData')}</span>
           </button>
 
           {resetSuccess && (
-            <span className="text-xs text-emerald-700 font-semibold flex items-center gap-1">
-              <CheckCircle2 className="w-4 h-4" /> Platform data reset successfully
+            <span className="text-xs text-emerald-700 dark:text-emerald-400 font-semibold flex items-center gap-1">
+              <CheckCircle2 className="w-4 h-4" /> {t('resetSuccessMsg')}
             </span>
           )}
         </div>
 
         {/* General Feedback Box */}
         {showFeedbackModal && (
-          <div className="mt-4 pt-4 border-t border-slate-100">
+          <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
             <FeedbackBox
               feedbackType="General Feedback"
               onComplete={() => {}}
